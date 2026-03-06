@@ -4,9 +4,10 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Badge from '@/components/Badge';
 import StatusDot from '@/components/StatusDot';
-import { DELHI_NODES, dijkstra, GRAPH } from '@/components/delhiData';
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
+import { MAPS_LIBRARIES } from '@/components/DelhiMap';
 
-// Leaflet must be loaded client-side only (no SSR)
+// Leaflet-free dynamic import — now using Google Maps
 const DelhiMap = dynamic(() => import('@/components/DelhiMap'), {
     ssr: false,
     loading: () => (
@@ -33,57 +34,98 @@ function OtpInput() {
     );
 }
 
+/* ── Supported Cities ── */
+const CITIES = [
+    { name: 'Delhi', bounds: { north: 28.883, south: 28.404, east: 77.347, west: 76.839 } },
+    { name: 'Mumbai', bounds: { north: 19.269, south: 18.893, east: 73.047, west: 72.776 } },
+    { name: 'Bengaluru', bounds: { north: 13.144, south: 12.832, east: 77.752, west: 77.458 } },
+    { name: 'Hyderabad', bounds: { north: 17.540, south: 17.248, east: 78.631, west: 78.327 } },
+    { name: 'Chennai', bounds: { north: 13.234, south: 12.953, east: 80.334, west: 80.207 } },
+    { name: 'Pune', bounds: { north: 18.633, south: 18.418, east: 73.957, west: 73.768 } },
+    { name: 'Kolkata', bounds: { north: 22.639, south: 22.395, east: 88.430, west: 88.246 } },
+    { name: 'Ahmedabad', bounds: { north: 23.121, south: 22.922, east: 72.705, west: 72.490 } },
+];
+
+/* ── Autocomplete Input ── */
+function PlaceInput({ label, placeholder, onPlaceSelect, cityBounds }) {
+    const acRef = useRef(null);
+    const acOptions = cityBounds
+        ? { bounds: cityBounds, strictBounds: true, componentRestrictions: { country: 'in' } }
+        : { componentRestrictions: { country: 'in' } };
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">{label}</label>
+            <Autocomplete
+                onLoad={ac => { acRef.current = ac; }}
+                onPlaceChanged={() => {
+                    if (!acRef.current) return;
+                    const place = acRef.current.getPlace();
+                    if (place?.geometry?.location) {
+                        onPlaceSelect({
+                            lat: place.geometry.location.lat(),
+                            lng: place.geometry.location.lng(),
+                            name: place.formatted_address || place.name || '',
+                        });
+                    }
+                }}
+                options={acOptions}
+            >
+                <input
+                    className="input-field w-full"
+                    placeholder={placeholder}
+                    style={{ width: '100%' }}
+                />
+            </Autocomplete>
+        </div>
+    );
+}
+
 /* ── Main Portal ── */
 export default function PortalPage() {
+    // Load Google Maps API (shares the cached script with DelhiMap.jsx)
+    const { isLoaded: mapsLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+        libraries: MAPS_LIBRARIES,
+    });
+
     const [loggedIn, setLoggedIn] = useState(false);
     const [role, setRole] = useState('ambulance');
     const [userId, setUserId] = useState('DISP-AMB-0042');
     const [corridorType, setCorridorType] = useState('ambulance');
     const [routeShown, setRouteShown] = useState(false);
     const [corridorActive, setCorridorActive] = useState(false);
-    const [etaSec, setEtaSec] = useState(252);
     const [showCorridor, setShowCorridor] = useState(false);
     const [auditLog, setAuditLog] = useState([]);
     const [calculating, setCalculating] = useState(false);
     const [initiating, setInitiating] = useState(false);
-    const [activeNode, setActiveNode] = useState(null);
     const [vehicleId, setVehicleId] = useState('AMB-042');
+    const [city, setCity] = useState('Delhi');
 
-    // Origin / destination selection
-    const [originId, setOriginId] = useState('DWK');       // Dwarka Sector 12
-    const [destinationId, setDestinationId] = useState('AIM'); // AIIMS
+    // Free-text location state
+    const [originLatLng, setOriginLatLng] = useState(null);
+    const [destLatLng, setDestLatLng] = useState(null);
+    const [originName, setOriginName] = useState('');
+    const [destName, setDestName] = useState('');
 
-    // Computed shortest path (array of node IDs)
-    const [pathNodeIds, setPathNodeIds] = useState([]);
-    const [pathDistKm, setPathDistKm] = useState(null);
+    // Route info returned by Google
+    const [routeInfo, setRouteInfo] = useState(null); // {distanceText, durationText, durationSec}
+    const [etaSec, setEtaSec] = useState(0);
 
-    // Derived: intermediate nodes on the current path (excl. origin/dest)
-    const intermediateNodes = pathNodeIds
-        .slice(1, -1)
-        .map(id => DELHI_NODES.find(n => n.id === id))
-        .filter(Boolean);
-
-    const originNode = DELHI_NODES.find(n => n.id === originId) || DELHI_NODES[0];
-    const destNode = DELHI_NODES.find(n => n.id === destinationId) || DELHI_NODES[7];
-
-    const handleNodeUpdate = useCallback((n) => {
-        setActiveNode(n);
-        if (n < intermediateNodes.length) {
-            addAudit('CORRIDOR', `Vehicle at ${intermediateNodes[n]?.name || 'waypoint'}`);
-        } else {
-            addAudit('CORRIDOR', `Vehicle arrived at ${destNode.name}`);
-        }
-    }, [intermediateNodes, destNode]);
-
-    const addAudit = (type, msg) => {
+    const addAudit = (type, msg) =>
         setAuditLog(prev => [{ type, msg, time: new Date().toLocaleTimeString() }, ...prev]);
-    };
 
+    // ETA countdown while corridor is active
     useEffect(() => {
-        if (!corridorActive) return;
+        if (!corridorActive || etaSec <= 0) return;
         const t = setInterval(() => setEtaSec(s => Math.max(0, s - 1)), 1000);
         return () => clearInterval(t);
     }, [corridorActive]);
+
+    const handleRouteResult = useCallback((info) => {
+        setRouteInfo(info);
+        setEtaSec(info.durationSec || 0);
+    }, []);
 
     function handleLogin(e) {
         e.preventDefault();
@@ -95,63 +137,47 @@ export default function PortalPage() {
     }
 
     function calcRoute() {
-        if (originId === destinationId) return;
+        if (!originLatLng || !destLatLng) return;
         setCalculating(true);
-        addAudit('ROUTE', `Route calculation: ${originNode.name} → ${destNode.name}`);
-
+        addAudit('ROUTE', `Route initiated: ${originName} → ${destName}`);
         setTimeout(() => {
-            // Run Dijkstra
-            const { path, totalDist } = dijkstra(
-                // We need to pass the graph — build it on the fly using the exported nodes
-                buildGraphLocal(),
-                originId,
-                destinationId
-            );
-            setPathNodeIds(path);
-            setPathDistKm(totalDist === Infinity ? null : (totalDist / 1000).toFixed(1));
             setCalculating(false);
             setRouteShown(true);
             setShowCorridor(true);
             setCorridorActive(false);
-            setActiveNode(null);
-            const via = path.length > 2 ? `${path.length - 2} waypoints` : 'direct';
-            addAudit('ROUTE', `Dijkstra path: ${path.length} nodes · ${(totalDist / 1000).toFixed(1)} km · via ${via}`);
-        }, 1500);
+            addAudit('ROUTE', 'Google Maps traffic-aware path computed');
+        }, 800);
+    }
+
+    function swapPlaces() {
+        setOriginLatLng(destLatLng);
+        setDestLatLng(originLatLng);
+        setOriginName(destName);
+        setDestName(originName);
+        setRouteShown(false);
+        setShowCorridor(false);
+        setCorridorActive(false);
+        setRouteInfo(null);
     }
 
     function initiateWave() {
         setInitiating(true);
-        addAudit('CORRIDOR', `GREEN WAVE INITIATED — ${intermediateNodes.length} nodes preempting`);
-        // Reset ETA based on distance (~40 km/h avg)
-        if (pathDistKm) setEtaSec(Math.round(pathDistKm / 40 * 3600));
+        addAudit('CORRIDOR', `GREEN WAVE INITIATED — ${originName} → ${destName}`);
         setTimeout(() => {
             setInitiating(false);
             setCorridorActive(true);
-            addAudit('CORRIDOR', `${originNode.name} cleared · En route to ${destNode.name}`);
+            addAudit('CORRIDOR', `Corridor active — vehicle en route`);
         }, 2000);
     }
 
     function deactivate() {
         setCorridorActive(false);
-        setActiveNode(null);
         addAudit('CORRIDOR', 'Corridor manually terminated by dispatcher');
     }
 
-    function swapOriginDest() {
-        setOriginId(destinationId);
-        setDestinationId(originId);
-        setRouteShown(false);
-        setShowCorridor(false);
-        setCorridorActive(false);
-        setPathNodeIds([]);
-    }
-
-    const roleLabels = {
-        ambulance: 'Hospital Dispatcher',
-        police: 'Police Chief',
-        vvip: 'VVIP Security Director'
-    };
-    const etaStr = `${Math.floor(etaSec / 60)}m ${(etaSec % 60).toString().padStart(2, '0')}s`;
+    const roleLabels = { ambulance: 'Hospital Dispatcher', police: 'Police Chief', vvip: 'VVIP Security Director' };
+    const etaStr = etaSec > 0 ? `${Math.floor(etaSec / 60)}m ${(etaSec % 60).toString().padStart(2, '0')}s` : routeInfo?.durationText || '—';
+    const canCalc = !!originLatLng && !!destLatLng;
 
     /* ── LOGIN SCREEN ── */
     if (!loggedIn) return (
@@ -160,7 +186,7 @@ export default function PortalPage() {
             <div className="glow-blob" style={{ width: '500px', height: '500px', top: '-200px', left: '-100px', opacity: 0.5, background: 'rgba(0,245,255,0.12)' }} />
             <div className="glow-blob" style={{ width: '400px', height: '400px', bottom: '-100px', right: '-100px', opacity: 0.4, background: 'rgba(124,58,237,0.12)' }} />
 
-            <div className="relative z-10 w-full max-w-md mx-4 bg-[rgba(13,17,23,0.9)] backdrop-blur-xl border border-[rgba(124,58,237,0.25)] rounded-[32px] p-10 shadow-[0_20px_80px_rgba(0,0,0,0.6),0_0_0_1px_rgba(124,58,237,0.1)]">
+            <div className="relative z-10 w-full max-w-md mx-4 bg-[rgba(13,17,23,0.9)] backdrop-blur-xl border border-[rgba(124,58,237,0.25)] rounded-[32px] p-10 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
                 <div className="flex flex-col items-center mb-8">
                     <div className="flex items-center gap-2.5 font-extrabold text-2xl mb-3">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center text-2xl neon-cyan">⬡</div>
@@ -168,12 +194,12 @@ export default function PortalPage() {
                     </div>
                     <Badge variant="violet">Secure Access Portal</Badge>
                     <h2 className="text-xl font-bold mt-3">Green Corridor Dispatcher</h2>
-                    <p className="text-text-secondary text-sm mt-1 text-center">Authorized personnel only. All sessions are monitored and logged.</p>
+                    <p className="text-text-secondary text-sm mt-1 text-center">Authorized personnel only. All sessions are monitored.</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Dispatcher ID / Badge Number</label>
+                        <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Dispatcher ID</label>
                         <input className="input-field" value={userId} onChange={e => setUserId(e.target.value)} placeholder="e.g. DISP-AMB-0042" />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -188,7 +214,6 @@ export default function PortalPage() {
                         <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Access Code</label>
                         <input type="password" className="input-field" defaultValue="secret123" placeholder="••••••••" />
                     </div>
-                    {/* MFA */}
                     <div className="bg-[rgba(124,58,237,0.08)] border border-[rgba(124,58,237,0.2)] rounded-xl p-3.5">
                         <div className="flex items-center gap-2 mb-3">
                             <span className="text-sm font-semibold">Multi-Factor Verification</span>
@@ -202,8 +227,7 @@ export default function PortalPage() {
                 </form>
 
                 <div className="mt-5 pt-4 border-t border-white/5 text-center text-[0.7rem] text-text-muted">
-                    Secured with AES-256 · JWT · RBAC + MFA<br />
-                    Session will be logged with timestamp, user ID, and GPS coordinates
+                    Secured with AES-256 · JWT · RBAC + MFA
                 </div>
             </div>
         </div>
@@ -213,7 +237,6 @@ export default function PortalPage() {
     return (
         <div className="min-h-screen bg-bg-deep font-sans relative">
             <div className="grid-bg" />
-            {/* Navbar */}
             <nav className="relative z-10 flex items-center justify-between px-10 py-3.5 bg-bg-deep/95 border-b border-white/5 backdrop-blur-xl">
                 <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl no-underline text-white">
                     <div className="w-8 h-8 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan">⬡</div>
@@ -237,11 +260,21 @@ export default function PortalPage() {
                     {/* LEFT – Route Planner */}
                     <div className="flex flex-col gap-5">
                         <div className="bg-bg-card border border-white/5 rounded-xl p-6">
-                            <Badge variant="red" id="cbadge">
+                            <Badge variant="red">
                                 {corridorType === 'ambulance' ? 'Emergency Green Corridor' : corridorType === 'fire' ? 'Fire Truck Corridor' : 'VVIP Secure Corridor'}
                             </Badge>
                             <h3 className="text-lg font-bold mt-2.5 mb-1">Initiate Route</h3>
-                            <p className="text-text-secondary text-sm mb-5">Select origin and destination. Dijkstra&apos;s algorithm computes the shortest path.</p>
+                            <p className="text-text-secondary text-sm mb-4">Select a city, then type the start and end location. Google Maps will find the best traffic-aware path.</p>
+
+                            {/* City selector */}
+                            <div className="flex flex-col gap-1.5 mb-4">
+                                <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">City</label>
+                                <select className="input-field" value={city}
+                                    onChange={e => { setCity(e.target.value); setOriginLatLng(null); setDestLatLng(null); setOriginName(''); setDestName(''); setRouteShown(false); setShowCorridor(false); setCorridorActive(false); setRouteInfo(null); }}
+                                    style={{ color: '#0f172a', background: '#f8fafc' }}>
+                                    {CITIES.map(c => <option key={c.name} value={c.name} style={{ color: '#0f172a' }}>{c.name}</option>)}
+                                </select>
+                            </div>
 
                             {/* Corridor type */}
                             <div className="flex gap-2 mb-5">
@@ -254,111 +287,103 @@ export default function PortalPage() {
                             </div>
 
                             <div className="flex flex-col gap-3.5">
-                                {/* Origin dropdown */}
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Origin</label>
-                                    <select className="input-field" style={{ color: '#f1f5f9', background: '#111827' }} value={originId} onChange={e => { setOriginId(e.target.value); setRouteShown(false); setShowCorridor(false); setCorridorActive(false); }}>
-                                        {DELHI_NODES.map(n => (
-                                            <option key={n.id} value={n.id} disabled={n.id === destinationId} style={{ color: '#0f172a', background: '#f8fafc' }}>{n.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                                {/* Origin input with Google Places Autocomplete */}
+                                {mapsLoaded ? (
+                                    <PlaceInput
+                                        key={`origin-${city}`}
+                                        label="Origin"
+                                        placeholder={`Start point in ${city}...`}
+                                        cityBounds={CITIES.find(c => c.name === city)?.bounds}
+                                        onPlaceSelect={p => { setOriginLatLng({ lat: p.lat, lng: p.lng }); setOriginName(p.name); setRouteShown(false); setShowCorridor(false); setCorridorActive(false); setRouteInfo(null); }}
+                                    />
+                                ) : (
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Origin</label>
+                                        <input disabled className="input-field opacity-50" placeholder="Loading Google Maps..." />
+                                    </div>
+                                )}
 
-                                {/* Swap button */}
+                                {/* Swap */}
                                 <div className="flex items-center gap-2.5">
                                     <div className="flex-1 h-px bg-white/10" />
-                                    <button onClick={swapOriginDest} title="Swap origin and destination"
-                                        className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 text-text-secondary hover:border-accent-cyan/30 text-base font-sans cursor-pointer">
+                                    <button onClick={swapPlaces} disabled={!originLatLng && !destLatLng} title="Swap origin and destination"
+                                        className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 text-text-secondary hover:border-accent-cyan/30 text-base font-sans cursor-pointer disabled:opacity-40">
                                         ⇅
                                     </button>
                                     <div className="flex-1 h-px bg-white/10" />
                                 </div>
 
-                                {/* Destination dropdown */}
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Destination</label>
-                                    <select className="input-field" style={{ color: '#f1f5f9', background: '#111827' }} value={destinationId} onChange={e => { setDestinationId(e.target.value); setRouteShown(false); setShowCorridor(false); setCorridorActive(false); }}>
-                                        {DELHI_NODES.map(n => (
-                                            <option key={n.id} value={n.id} disabled={n.id === originId} style={{ color: '#0f172a', background: '#f8fafc' }}>{n.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
+                                {/* Destination input with Google Places Autocomplete */}
+                                {mapsLoaded ? (
+                                    <PlaceInput
+                                        key={`dest-${city}`}
+                                        label="Destination"
+                                        placeholder={`End point in ${city}...`}
+                                        cityBounds={CITIES.find(c => c.name === city)?.bounds}
+                                        onPlaceSelect={p => { setDestLatLng({ lat: p.lat, lng: p.lng }); setDestName(p.name); setRouteShown(false); setShowCorridor(false); setCorridorActive(false); setRouteInfo(null); }}
+                                    />
+                                ) : (
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Vehicle ID</label>
-                                        <input className="input-field" value={vehicleId} onChange={e => setVehicleId(e.target.value)} />
+                                        <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Destination</label>
+                                        <input disabled className="input-field opacity-50" placeholder="Loading Google Maps..." />
                                     </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Priority</label>
-                                        <select className="input-field" style={{ color: '#0f172a', background: '#ffffff' }}>
-                                            <option style={{ color: '#0f172a', background: '#ffffff' }}>Critical (Cardiac Arrest)</option>
-                                            <option style={{ color: '#0f172a', background: '#ffffff' }}>High (Trauma)</option>
-                                            <option style={{ color: '#0f172a', background: '#ffffff' }}>Medium</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                )}
 
-                                <button onClick={calcRoute} disabled={calculating || originId === destinationId}
-                                    className="w-full py-3 rounded-xl font-bold bg-accent-cyan text-black disabled:opacity-60 hover:shadow-[0_0_20px_rgba(0,245,255,0.4)] transition-all font-sans cursor-pointer">
-                                    {calculating ? 'Computing...' : 'Calculate Shortest Path'}
+
+
+                                {!canCalc && (
+                                    <p className="text-[0.75rem] text-text-muted text-center">
+                                        Select origin and destination from the autocomplete suggestions to enable routing.
+                                    </p>
+                                )}
+
+                                <button onClick={calcRoute} disabled={calculating || !canCalc}
+                                    className="w-full py-3 rounded-xl font-bold bg-gradient-to-br from-accent-cyan to-[#0099cc] text-black disabled:opacity-50 hover:shadow-[0_0_20px_rgba(0,245,255,0.4)] transition-all font-sans cursor-pointer">
+                                    {calculating ? 'Routing...' : 'Get Best Route'}
                                 </button>
                             </div>
 
                             {/* Route results */}
-                            {routeShown && pathNodeIds.length > 0 && (
+                            {routeShown && (
                                 <div className="mt-5 pt-5 border-t border-white/10 flex flex-col gap-4">
-                                    <div className="text-[0.7rem] text-text-muted uppercase tracking-widest mb-1">Dijkstra Route Analysis</div>
+                                    <div className="text-[0.7rem] text-text-muted uppercase tracking-widest mb-1">Google Maps Route</div>
 
-                                    {/* Distance comparison */}
+                                    {/* Distance/time comparison */}
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1 bg-white/[0.02] border border-white/10 rounded-xl p-3.5">
-                                            <div className="text-[0.68rem] text-text-muted uppercase mb-1">Standard GPS Route</div>
+                                            <div className="text-[0.68rem] text-text-muted uppercase mb-1">Without Corridor</div>
                                             <div className="text-2xl font-extrabold font-mono text-accent-amber">
-                                                {pathDistKm ? `${(pathDistKm * 1.45).toFixed(1)} km` : '—'}
+                                                {routeInfo ? routeInfo.durationText : '—'}
                                             </div>
-                                            <div className="text-xs text-text-secondary mt-1">Congested road network</div>
-                                            <div className="text-xs text-text-muted mt-1.5">Multiple signal stops</div>
+                                            <div className="text-xs text-text-secondary mt-1">{routeInfo?.distanceText || '—'} · with stops</div>
                                         </div>
                                         <div className="text-xs font-extrabold text-text-muted bg-white/5 border border-white/10 rounded-full px-2.5 py-1.5">VS</div>
                                         <div className="flex-1 bg-accent-green/5 border border-accent-green/30 rounded-xl p-3.5">
-                                            <div className="text-[0.68rem] text-text-muted uppercase mb-1">AURA-GRID Shortest Path</div>
+                                            <div className="text-[0.68rem] text-text-muted uppercase mb-1">AURA-GRID Corridor</div>
                                             <div className="text-2xl font-extrabold font-mono text-accent-green">
-                                                {pathDistKm ? `${pathDistKm} km` : '—'}
+                                                {routeInfo ? `~${Math.round((routeInfo.durationSec * 0.6) / 60)}m` : '—'}
                                             </div>
-                                            <div className="text-xs text-text-secondary mt-1">Via {pathNodeIds.length - 2} cleared waypoints</div>
-                                            <div className="text-xs text-accent-green mt-1.5">Zero stops</div>
+                                            <div className="text-xs text-text-secondary mt-1">{routeInfo?.distanceText || '—'} · zero stops</div>
                                         </div>
                                     </div>
 
-                                    {/* Node list — dynamic from Dijkstra path */}
-                                    <div>
-                                        <div className="text-[0.7rem] text-text-muted uppercase tracking-widest mb-2">
-                                            Route Nodes ({pathNodeIds.length} Total)
+                                    <div className="flex flex-col gap-1.5 bg-white/[0.02] border border-white/5 rounded-xl p-3.5">
+                                        <div className="text-[0.68rem] text-text-muted uppercase mb-1">Route</div>
+                                        <div className="flex items-start gap-2">
+                                            <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#00f5ff', display: 'inline-block', flexShrink: 0, marginTop: 3 }} />
+                                            <span className="text-sm text-text-secondary">{originName || '—'}</span>
                                         </div>
-                                        <div className="flex flex-col gap-1.5">
-                                            {pathNodeIds.map((id, idx) => {
-                                                const node = DELHI_NODES.find(n => n.id === id);
-                                                if (!node) return null;
-                                                const isOrigin = idx === 0;
-                                                const isDest = idx === pathNodeIds.length - 1;
-                                                const statusColor = isOrigin ? 'cyan' : isDest ? 'violet' : 'green';
-                                                const statusLabel = isOrigin ? 'Origin' : isDest ? 'Destination' : 'Waypoint';
-                                                return (
-                                                    <div key={id} className="flex items-center gap-2.5 px-3 py-2 bg-white/[0.02] border border-white/5 rounded-lg text-xs">
-                                                        <span className="text-accent-cyan font-mono">{node.id}</span>
-                                                        <span className="text-text-secondary flex-1">{node.name}</span>
-                                                        <Badge variant={statusColor} className="text-[0.62rem]">{statusLabel}</Badge>
-                                                    </div>
-                                                );
-                                            })}
+                                        <div className="ml-[5px] w-0.5 h-4 bg-white/10" />
+                                        <div className="flex items-start gap-2">
+                                            <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#a78bfa', display: 'inline-block', flexShrink: 0, marginTop: 3 }} />
+                                            <span className="text-sm text-text-secondary">{destName || '—'}</span>
                                         </div>
                                     </div>
 
                                     {!corridorActive && (
                                         <button onClick={initiateWave} disabled={initiating}
-                                            className="w-full py-4 rounded-xl font-bold text-base bg-accent-cyan text-black shadow-[0_0_20px_rgba(0,245,255,0.3)] hover:shadow-[0_0_30px_rgba(0,245,255,0.6)] disabled:opacity-60 transition-all font-sans cursor-pointer">
-                                            {initiating ? 'Activating nodes...' : 'Initiate Green Wave'}
+                                            className="w-full py-4 rounded-xl font-bold text-base bg-gradient-to-br from-accent-green to-[#00cc7a] text-black shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.6)] disabled:opacity-60 transition-all font-sans cursor-pointer">
+                                            {initiating ? 'Activating...' : 'Initiate Green Wave'}
                                         </button>
                                     )}
                                 </div>
@@ -373,9 +398,9 @@ export default function PortalPage() {
                                 <div>
                                     <h3 className="text-base font-bold">Delhi Traffic Map</h3>
                                     <p className="text-text-secondary text-xs">
-                                        {routeShown && pathNodeIds.length > 0
-                                            ? `${originNode.name} → ${destNode.name} · ${pathDistKm || '?'} km · Dijkstra shortest path`
-                                            : 'Select origin and destination, then calculate route'}
+                                        {routeShown && originName && destName
+                                            ? `${originName} → ${destName}`
+                                            : 'Type an origin and destination above to calculate route'}
                                     </p>
                                 </div>
                                 <Badge variant="cyan"><StatusDot color="cyan" className="mr-1" />Live</Badge>
@@ -383,10 +408,12 @@ export default function PortalPage() {
                             <DelhiMap
                                 showCorridor={showCorridor}
                                 corridorActive={corridorActive}
-                                originId={originId}
-                                destinationId={destinationId}
-                                pathNodeIds={pathNodeIds}
-                                onNodeUpdate={handleNodeUpdate}
+                                originLatLng={originLatLng}
+                                destLatLng={destLatLng}
+                                originName={originName}
+                                destName={destName}
+                                onRouteResult={handleRouteResult}
+                                onNodeUpdate={() => { }}
                             />
                         </div>
 
@@ -396,64 +423,31 @@ export default function PortalPage() {
                                 <div className="flex justify-between items-center mb-4">
                                     <div>
                                         <Badge variant="red">GREEN WAVE ACTIVE</Badge>
-                                        <h3 className="mt-2 text-base font-bold">Corridor: {vehicleId} — {originNode.name} → {destNode.name}</h3>
+                                        <h3 className="mt-2 text-base font-bold">{vehicleId} — {originName} → {destName}</h3>
                                     </div>
                                     <button onClick={deactivate} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,59,92,0.15)] text-accent-red border border-accent-red/30 font-sans cursor-pointer">Terminate</button>
                                 </div>
 
-                                {/* Dynamic timeline from Dijkstra path */}
+                                {/* Simple origin → destination timeline */}
                                 <div className="flex flex-col gap-0">
-                                    {pathNodeIds.map((id, idx) => {
-                                        const node = DELHI_NODES.find(n => n.id === id);
-                                        if (!node) return null;
-                                        const isOrigin = idx === 0;
-                                        const isDest = idx === pathNodeIds.length - 1;
-                                        // Intermediate node index (0-based)
-                                        const intIdx = idx - 1;
-                                        let type, status;
-                                        if (isOrigin) {
-                                            type = 'done'; status = 'Departed';
-                                        } else if (isDest) {
-                                            type = activeNode >= intermediateNodes.length ? 'done' : 'pending';
-                                            status = activeNode >= intermediateNodes.length ? 'Arrived' : 'Destination';
-                                        } else if (activeNode === null) {
-                                            type = 'pending'; status = 'Queued';
-                                        } else if (intIdx < activeNode) {
-                                            type = 'done'; status = 'Cleared';
-                                        } else if (intIdx === activeNode) {
-                                            type = 'active'; status = 'In Transit';
-                                        } else if (intIdx === activeNode + 1) {
-                                            type = 'prep'; status = 'Preempting';
-                                        } else {
-                                            type = 'pending'; status = 'Queued';
-                                        }
-                                        return (
-                                            <div key={id} className="flex items-start gap-3 relative pb-2">
-                                                {idx < pathNodeIds.length - 1 && (
-                                                    <div className={`absolute left-[7px] top-4 w-0.5 h-full ${type === 'done' ? 'bg-accent-green/30' : type === 'active' ? 'bg-accent-cyan/30' : 'bg-white/10'}`} />
-                                                )}
-                                                <div className={`w-4 h-4 rounded-full flex-shrink-0 border-2 mt-0.5 ${type === 'done' ? 'bg-accent-green border-accent-green/50' :
-                                                    type === 'active' ? 'bg-accent-cyan border-accent-cyan shadow-neon-cyan animate-pulse-dot' :
-                                                        type === 'prep' ? 'bg-accent-amber border-accent-amber/50' :
-                                                            'bg-[#334155] border-[#475569]'}`}
-                                                />
-                                                <div>
-                                                    <div className="text-sm font-semibold">
-                                                        {isOrigin ? 'Origin' : isDest ? 'Destination' : node.id} — {node.name}
-                                                    </div>
-                                                    <div className={`text-xs mt-0.5 ${type === 'done' ? 'text-accent-green' :
-                                                        type === 'active' ? 'text-accent-cyan' :
-                                                            type === 'prep' ? 'text-accent-amber' : 'text-text-muted'}`}>
-                                                        {status}
-                                                    </div>
-                                                </div>
+                                    {[
+                                        { label: originName || 'Origin', type: 'done', status: 'Departed' },
+                                        { label: 'En Route (Corridor Active)', type: 'active', status: 'In Transit — all signals preempted' },
+                                        { label: destName || 'Destination', type: 'pending', status: 'Awaiting arrival' },
+                                    ].map(({ label, type, status }, i, a) => (
+                                        <div key={i} className="flex items-start gap-3 relative pb-2">
+                                            {i < a.length - 1 && <div className={`absolute left-[7px] top-4 w-0.5 h-full ${type === 'done' ? 'bg-accent-green/30' : 'bg-accent-cyan/30'}`} />}
+                                            <div className={`w-4 h-4 rounded-full flex-shrink-0 border-2 mt-0.5 ${type === 'done' ? 'bg-accent-green border-accent-green/50' : type === 'active' ? 'bg-accent-cyan border-accent-cyan shadow-neon-cyan animate-pulse-dot' : 'bg-[#334155] border-[#475569]'}`} />
+                                            <div>
+                                                <div className="text-sm font-semibold">{label}</div>
+                                                <div className={`text-xs mt-0.5 ${type === 'done' ? 'text-accent-green' : type === 'active' ? 'text-accent-cyan' : 'text-text-muted'}`}>{status}</div>
                                             </div>
-                                        );
-                                    })}
+                                        </div>
+                                    ))}
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/10">
-                                    {[['ETA', etaStr, 'text-accent-green'], ['Stops', '0', 'text-accent-green'], ['Distance', `${pathDistKm || '?'} km`, 'text-accent-cyan']].map(([l, v, c]) => (
+                                    {[['ETA', etaStr, 'text-accent-green'], ['Stops', '0', 'text-accent-green'], ['Distance', routeInfo?.distanceText || '—', 'text-accent-cyan']].map(([l, v, c]) => (
                                         <div key={l}>
                                             <div className="text-[0.65rem] text-text-muted uppercase tracking-wide mb-1">{l}</div>
                                             <div className={`font-bold font-mono text-lg ${c}`}>{v}</div>
@@ -467,28 +461,4 @@ export default function PortalPage() {
             </div>
         </div>
     );
-}
-
-// Local graph builder (mirrors DelhiMap internals — avoids circular import of GRAPH)
-function buildGraphLocal() {
-    const EDGES_LOCAL = [
-        ['DWK', 'DWM', 1100], ['DWM', 'PVI', 2400], ['PVI', 'IGI', 3700],
-        ['IGI', 'SAK', 5500], ['PVI', 'DHK', 5700], ['DWM', 'DHK', 6800],
-        ['DHK', 'SVJ', 3100], ['SVJ', 'AIM', 2500], ['SVJ', 'LPN', 3400],
-        ['AIM', 'LPN', 1800], ['AIM', 'SAK', 4800], ['LPN', 'NZM', 2100],
-        ['LPN', 'NWD', 3100], ['NZM', 'NWD', 2800], ['NZM', 'PGM', 2400],
-        ['PGM', 'RJP', 1400], ['RJP', 'CNG', 2200], ['CNG', 'KRB', 2800],
-        ['CNG', 'CSH', 3600], ['KRB', 'GTK', 3900], ['KRB', 'DHK', 5400],
-        ['CSH', 'GTK', 2800], ['CSH', 'CNG', 3600], ['GTK', 'RHN', 5600],
-        ['GTK', 'NDC', 9200], ['RHN', 'NDC', 8800], ['CSH', 'GTB', 7400],
-        ['PGM', 'GTB', 6700], ['SAK', 'NWD', 3200], ['RJP', 'PGM', 1400],
-        ['DHK', 'CNG', 7800], ['DHK', 'KRB', 6200],
-    ];
-    const graph = {};
-    DELHI_NODES.forEach(n => { graph[n.id] = []; });
-    EDGES_LOCAL.forEach(([a, b, w]) => {
-        graph[a].push({ id: b, weight: w });
-        graph[b].push({ id: a, weight: w });
-    });
-    return graph;
 }
