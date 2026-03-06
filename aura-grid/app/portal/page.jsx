@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Badge from '@/components/Badge';
@@ -47,7 +48,7 @@ const CITIES = [
 ];
 
 /* ── Autocomplete Input ── */
-function PlaceInput({ label, placeholder, onPlaceSelect, cityBounds }) {
+function PlaceInput({ label, placeholder, onPlaceSelect, cityBounds, defaultValue }) {
     const acRef = useRef(null);
     const acOptions = cityBounds
         ? { bounds: cityBounds, strictBounds: true, componentRestrictions: { country: 'in' } }
@@ -73,6 +74,7 @@ function PlaceInput({ label, placeholder, onPlaceSelect, cityBounds }) {
                 <input
                     className="input-field w-full"
                     placeholder={placeholder}
+                    defaultValue={defaultValue || ''}
                     style={{ width: '100%' }}
                 />
             </Autocomplete>
@@ -92,6 +94,46 @@ export default function PortalPage() {
     const [loggedIn, setLoggedIn] = useState(false);
     const [role, setRole] = useState('ambulance');
     const [userId, setUserId] = useState('DISP-AMB-0042');
+
+    // Restore session from localStorage on mount; also restore corridor if ?corridorId is set
+    useEffect(() => {
+        try {
+            // Restore login session
+            const session = JSON.parse(localStorage.getItem('aura_portal_session') || 'null');
+            if (session?.loggedIn) {
+                setLoggedIn(true);
+                setRole(session.role || 'ambulance');
+                setUserId(session.userId || 'DISP-AMB-0042');
+            }
+
+            // Restore corridor state from URL corridorId param
+            const params = new URLSearchParams(window.location.search);
+            const corridorId = params.get('corridorId');
+            if (corridorId) {
+                const corridors = JSON.parse(localStorage.getItem('aura_active_corridors') || '[]');
+                const found = corridors.find(c => c.id === corridorId);
+                if (found) {
+                    if (found.originLatLng) setOriginLatLng(found.originLatLng);
+                    if (found.destLatLng) setDestLatLng(found.destLatLng);
+                    if (found.origin) setOriginName(found.origin);
+                    if (found.dest) setDestName(found.dest);
+                    if (found.corridorType) setCorridorType(found.corridorType);
+                    if (found.vehicleId) setVehicleId(found.vehicleId);
+                    setRouteShown(true);
+                    setShowCorridor(true);
+                    setCorridorActive(true);
+                    if (found.distance || found.duration) {
+                        setRouteInfo({
+                            distanceText: found.distance || '—',
+                            durationText: found.duration || '—',
+                            durationSec: found.durationSec || 0,
+                        });
+                        setEtaSec(found.durationSec || 0);
+                    }
+                }
+            }
+        } catch { }
+    }, []);
     const [corridorType, setCorridorType] = useState('ambulance');
     const [routeShown, setRouteShown] = useState(false);
     const [corridorActive, setCorridorActive] = useState(false);
@@ -133,6 +175,10 @@ export default function PortalPage() {
             setLoggedIn(true);
             addAudit('AUTH', `User ${userId} authenticated via MFA`);
             addAudit('SESSION', `Portal accessed at ${new Date().toLocaleTimeString()}`);
+            // Persist session so returning to portal skips login
+            try {
+                localStorage.setItem('aura_portal_session', JSON.stringify({ loggedIn: true, role, userId }));
+            } catch { }
         }, 1800);
     }
 
@@ -167,12 +213,37 @@ export default function PortalPage() {
             setInitiating(false);
             setCorridorActive(true);
             addAudit('CORRIDOR', `Corridor active — vehicle en route`);
+            // Save to localStorage so dashboard picks it up in real time
+            try {
+                const corridorEntry = {
+                    id: Date.now().toString(),
+                    vehicleId: vehicleId || 'AMB-042',
+                    corridorType,
+                    origin: originName,
+                    dest: destName,
+                    originLatLng,
+                    destLatLng,
+                    distance: routeInfo?.distanceText || '—',
+                    duration: routeInfo?.durationText || '—',
+                    durationSec: routeInfo?.durationSec || 0,
+                    activatedAt: new Date().toISOString(),
+                };
+                const existing = JSON.parse(localStorage.getItem('aura_active_corridors') || '[]');
+                existing.push(corridorEntry);
+                localStorage.setItem('aura_active_corridors', JSON.stringify(existing));
+            } catch { }
         }, 2000);
     }
 
     function deactivate() {
         setCorridorActive(false);
         addAudit('CORRIDOR', 'Corridor manually terminated by dispatcher');
+        // Remove all corridors for this route from localStorage
+        try {
+            const existing = JSON.parse(localStorage.getItem('aura_active_corridors') || '[]');
+            const updated = existing.filter(c => !(c.origin === originName && c.dest === destName));
+            localStorage.setItem('aura_active_corridors', JSON.stringify(updated));
+        } catch { }
     }
 
     const roleLabels = { ambulance: 'Hospital Dispatcher', police: 'Police Chief', vvip: 'VVIP Security Director' };
@@ -250,7 +321,7 @@ export default function PortalPage() {
                 <div className="flex items-center gap-2">
                     <Link href="/dashboard" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">Dashboard</Link>
                     <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">← Home</Link>
-                    <button onClick={() => setLoggedIn(false)} className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[rgba(255,59,92,0.15)] text-accent-red border border-accent-red/30 font-sans cursor-pointer">Logout</button>
+                    <button onClick={() => { setLoggedIn(false); try { localStorage.removeItem('aura_portal_session'); } catch { } }} className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[rgba(255,59,92,0.15)] text-accent-red border border-accent-red/30 font-sans cursor-pointer">Logout</button>
                 </div>
             </nav>
 
@@ -294,6 +365,7 @@ export default function PortalPage() {
                                         label="Origin"
                                         placeholder={`Start point in ${city}...`}
                                         cityBounds={CITIES.find(c => c.name === city)?.bounds}
+                                        defaultValue={originName}
                                         onPlaceSelect={p => { setOriginLatLng({ lat: p.lat, lng: p.lng }); setOriginName(p.name); setRouteShown(false); setShowCorridor(false); setCorridorActive(false); setRouteInfo(null); }}
                                     />
                                 ) : (
@@ -320,6 +392,7 @@ export default function PortalPage() {
                                         label="Destination"
                                         placeholder={`End point in ${city}...`}
                                         cityBounds={CITIES.find(c => c.name === city)?.bounds}
+                                        defaultValue={destName}
                                         onPlaceSelect={p => { setDestLatLng({ lat: p.lat, lng: p.lng }); setDestName(p.name); setRouteShown(false); setShowCorridor(false); setCorridorActive(false); setRouteInfo(null); }}
                                     />
                                 ) : (
