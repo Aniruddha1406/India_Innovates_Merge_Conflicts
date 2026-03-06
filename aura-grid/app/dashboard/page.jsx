@@ -111,7 +111,7 @@ function NodeDetail({ node, onClose }) {
                     <h3 className="font-bold text-base">{node.name}</h3>
                 </div>
                 <div className="flex gap-2">
-                    <Link href="/portal" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-br from-accent-green to-[#00cc7a] text-black no-underline">Activate Corridor</Link>
+                    <Link href="/portal" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent-cyan text-black no-underline">Activate Corridor</Link>
                     <button onClick={onClose} className="px-2.5 py-1.5 rounded-lg text-xs bg-white/5 text-text-muted hover:text-white font-sans cursor-pointer">✕</button>
                 </div>
             </div>
@@ -139,7 +139,7 @@ export default function DashboardPage() {
     const [selectedNode, setSelectedNode] = useState(null);
     const [etaSec, setEtaSec] = useState(222);
     const [speed, setSpeed] = useState(68);
-    const [toastVisible, setToastVisible] = useState(false);
+    const [selectedCity, setSelectedCity] = useState(null);
 
     const LANES = [
         { idx: 15, label: 'North Ring Rd' }, { idx: 10, label: 'MG Road' },
@@ -163,18 +163,73 @@ export default function DashboardPage() {
         return () => clearInterval(t);
     }, []);
 
-    /* Toast on load */
-    useEffect(() => { const t = setTimeout(() => setToastVisible(true), 2500); return () => clearTimeout(t); }, []);
-
     function simulateAlert() {
         const rnd = Math.floor(Math.random() * nodes.length);
         setNodes(prev => prev.map((n, i) => i === rnd ? { ...n, emergency: true } : n));
-        setToastVisible(true);
         setTimeout(() => setNodes(prev => prev.map((n, i) => i === rnd ? { ...n, emergency: false } : n)), 8000);
     }
 
     const etaStr = `${Math.floor(etaSec / 60)}m ${(etaSec % 60).toString().padStart(2, '0')}s`;
     const avgDensity = Math.round(nodes.reduce((s, n) => s + n.density, 0) / nodes.length);
+
+    const CITIES = [
+        { name: 'Delhi', state: 'Delhi NCR' },
+        { name: 'Mumbai', state: 'Maharashtra' },
+        { name: 'Bengaluru', state: 'Karnataka' },
+        { name: 'Chennai', state: 'Tamil Nadu' },
+        { name: 'Hyderabad', state: 'Telangana' },
+        { name: 'Kolkata', state: 'West Bengal' },
+        { name: 'Pune', state: 'Maharashtra' },
+        { name: 'Ahmedabad', state: 'Gujarat' },
+        { name: 'Jaipur', state: 'Rajasthan' },
+        { name: 'Surat', state: 'Gujarat' },
+        { name: 'Lucknow', state: 'Uttar Pradesh' },
+        { name: 'Chandigarh', state: 'Punjab' },
+    ];
+
+    // ── City picker screen ──
+    if (!selectedCity) {
+        return (
+            <div className="bg-bg-deep text-text-primary font-sans min-h-screen flex flex-col">
+                <div className="grid-bg" />
+                {/* Header */}
+                <header className="relative z-10 flex items-center justify-between px-6 py-3 bg-bg-deep/95 border-b border-white/5">
+                    <Link href="/" className="flex items-center gap-2 font-extrabold text-xl no-underline text-white">
+                        <div className="w-8 h-8 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan">⬡</div>
+                        <span><span className="text-accent-cyan">AURA</span>-GRID</span>
+                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline">🔒 Portal</Link>
+                        <Link href="/" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">← Home</Link>
+                    </div>
+                </header>
+
+                {/* City picker */}
+                <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 py-16">
+                    <div className="flex items-center gap-2 mb-3 text-accent-cyan text-xs font-bold uppercase tracking-widest">
+                        <span className="w-5 h-0.5 bg-accent-cyan rounded-full" />Select City
+                    </div>
+                    <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-center">Choose a City to Monitor</h1>
+                    <p className="text-text-secondary text-sm mb-10 text-center max-w-md">View live traffic intelligence, active corridors, and intersection stats for your city.</p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-w-3xl w-full">
+                        {CITIES.map(city => (
+                            <button
+                                key={city.name}
+                                onClick={() => setSelectedCity(city.name)}
+                                className="flex flex-col items-start gap-1 bg-bg-card border border-white/5 hover:border-accent-cyan/40 hover:bg-accent-cyan/[0.04] rounded-xl p-4 text-left transition-all cursor-pointer font-sans group"
+                            >
+                                <span className="text-base font-bold group-hover:text-accent-cyan transition-colors">{city.name}</span>
+                                <span className="text-[0.7rem] text-text-muted">{city.state}</span>
+                                {city.name === 'Delhi' && <span className="text-[0.6rem] font-bold text-accent-cyan mt-1">LIVE DATA ●</span>}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="bg-bg-deep text-text-primary font-sans h-screen flex flex-col overflow-hidden">
@@ -188,7 +243,9 @@ export default function DashboardPage() {
                         <span><span className="text-accent-cyan">AURA</span>-GRID</span>
                     </Link>
                     <div className="w-px h-6 bg-white/10" />
-                    <span className="text-sm text-text-muted">Live Control Center</span>
+                    <span className="text-sm text-text-muted">Live Control Center —</span>
+                    <span className="text-sm font-bold text-accent-cyan">{selectedCity}</span>
+                    <button onClick={() => setSelectedCity(null)} className="text-[0.65rem] text-text-muted hover:text-white bg-white/5 border border-white/5 rounded-lg px-2 py-1 font-sans cursor-pointer ml-1">Change City</button>
                 </div>
 
                 {/* Center stats */}
@@ -205,7 +262,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2 bg-accent-green/10 border border-accent-green/20 rounded-full px-3 py-1.5">
                         <StatusDot color="green" /><span className="font-mono text-xs text-text-secondary">LIVE</span>
                     </div>
-                    <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-br from-accent-cyan to-[#0099cc] text-black no-underline">🔒 Portal</Link>
+                    <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline">🔒 Portal</Link>
                     <Link href="/" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">← Home</Link>
                 </div>
             </header>
@@ -296,7 +353,7 @@ export default function DashboardPage() {
                         <FlowChart />
                     </div>
 
-                    {/* Camera feeds — simplified */}
+                    {/* Camera feeds */}
                     <div className="p-4 border-b border-white/5">
                         <div className="text-[0.68rem] font-bold uppercase tracking-widest text-text-muted mb-3">📷 Camera Status</div>
                         <div className="flex flex-col gap-2">
@@ -315,23 +372,14 @@ export default function DashboardPage() {
                     <div className="p-4">
                         <div className="text-[0.68rem] font-bold uppercase tracking-widest text-text-muted mb-3">⚡ Actions</div>
                         <div className="flex flex-col gap-2">
-                            <Link href="/portal" className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-gradient-to-br from-accent-green to-[#00cc7a] text-black no-underline">🚑 New Green Corridor</Link>
+                            <Link href="/portal" className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline">🚑 New Green Corridor</Link>
                             <button onClick={simulateAlert} className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary font-sans cursor-pointer hover:bg-white/10">🔔 Simulate Emergency</button>
                             <button className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary font-sans cursor-pointer hover:bg-white/10">📊 Export Report</button>
                         </div>
                     </div>
                 </aside>
             </main>
-
-            {/* Toast */}
-            <div className={`toast ${toastVisible ? 'show' : ''}`}>
-                <div className="text-2xl">🚨</div>
-                <div>
-                    <div className="font-bold text-sm">Emergency Override Activated!</div>
-                    <div className="text-xs text-text-secondary">Node override active — corridor initiating</div>
-                </div>
-                <button onClick={() => setToastVisible(false)} className="ml-auto text-text-muted text-lg leading-none bg-transparent border-none cursor-pointer">✕</button>
-            </div>
         </div>
     );
 }
+

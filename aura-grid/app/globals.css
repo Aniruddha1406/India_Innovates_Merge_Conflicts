@@ -57,10 +57,7 @@
 
 /* ── Gradient text ── */
 .grad-text {
-    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--accent-cyan);
 }
 
 .grad-text-cyan {
@@ -195,8 +192,8 @@
 }
 
 .progress-fill-green {
-    background: linear-gradient(90deg, var(--accent-green), #00cc7a);
-    box-shadow: 0 0 10px var(--accent-green);
+    background: linear-gradient(90deg, var(--accent-cyan), #0099cc);
+    box-shadow: 0 0 10px var(--accent-cyan);
 }
 
 .progress-fill-amber {

@@ -221,7 +221,7 @@ export default function PortalPage() {
                         </div>
                         <OtpInput />
                     </div>
-                    <button type="submit" className="w-full py-3.5 rounded-xl font-bold bg-gradient-to-br from-accent-cyan to-[#0099cc] text-black shadow-[0_0_20px_rgba(0,245,255,0.3)] hover:shadow-[0_0_30px_rgba(0,245,255,0.6)] transition-all font-sans cursor-pointer">
+                    <button type="submit" className="w-full py-3.5 rounded-xl font-bold bg-accent-cyan text-black shadow-[0_0_20px_rgba(0,245,255,0.3)] hover:shadow-[0_0_30px_rgba(0,245,255,0.6)] transition-all font-sans cursor-pointer">
                         Authenticate &amp; Access Portal
                     </button>
                 </form>

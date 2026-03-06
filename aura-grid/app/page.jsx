@@ -324,7 +324,7 @@ function FaqSection() {
                 <div className="flex items-center gap-2 mb-4 text-accent-cyan text-xs font-bold uppercase tracking-widest"><span className="w-5 h-0.5 bg-accent-cyan rounded-full" />Judge Q&A</div>
                 <h2 className="text-4xl font-extrabold tracking-tight mb-3">Edge Cases & <span className="grad-text">Fail-Safes</span></h2>
                 <p className="text-text-secondary mb-12 max-w-xl">AURA-GRID anticipates real-world failure modes. Every "What if?" has an engineered answer.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                     {FAQS.map((faq, i) => (
                         <div key={i} onClick={() => setOpen(open === i ? null : i)}
                             className={`bg-bg-card border rounded-xl p-5 cursor-pointer transition-all hover:border-accent-cyan/20 ${open === i ? 'border-accent-cyan/25' : 'border-white/5'}`}>
@@ -364,7 +364,7 @@ export default function HomePage() {
                             AURA-GRID fuses AI vision, predictive preemption, and verified green corridors to clear the path for ambulances, secure VVIP convoys, and optimize every intersection — automatically.
                         </p>
                         <div className="flex flex-wrap gap-3 mb-12">
-                            <a href="#pillars" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-bold bg-gradient-to-br from-accent-cyan to-[#0099cc] text-black shadow-[0_0_20px_rgba(0,245,255,0.3)] hover:shadow-[0_0_30px_rgba(0,245,255,0.6)] hover:-translate-y-px transition-all">Explore The Solution →</a>
+                            <a href="#pillars" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-bold bg-accent-cyan text-black shadow-[0_0_20px_rgba(0,245,255,0.3)] hover:shadow-[0_0_30px_rgba(0,245,255,0.6)] hover:-translate-y-px transition-all">Explore The Solution →</a>
                             <Link href="/dashboard" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-bold bg-white/5 border border-white/5 hover:bg-white/10 hover:-translate-y-px transition-all no-underline text-text-primary">Live Dashboard</Link>
                         </div>
                         {/* Stats bar */}

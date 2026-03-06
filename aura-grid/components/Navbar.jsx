@@ -57,7 +57,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                     href="/portal"
-                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold bg-gradient-to-br from-accent-cyan to-[#0099cc] text-black shadow-[0_0_20px_rgba(0,245,255,0.3)] hover:shadow-[0_0_30px_rgba(0,245,255,0.6)] hover:-translate-y-px transition-all no-underline"
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold bg-accent-cyan text-black shadow-[0_0_20px_rgba(0,245,255,0.3)] hover:shadow-[0_0_30px_rgba(0,245,255,0.6)] hover:-translate-y-px transition-all no-underline"
                 >
                     🔒 Green Corridor
                 </Link>
