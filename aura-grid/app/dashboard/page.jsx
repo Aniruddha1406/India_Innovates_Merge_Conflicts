@@ -4,41 +4,37 @@ import Link from 'next/link';
 import Badge from '@/components/Badge';
 import StatusDot from '@/components/StatusDot';
 import CorridorStatusBox from '@/components/CorridorStatusBox';
+import { CITY_NODES } from '@/lib/cityNodes';
 
-/* ── Node data ── */
-const INITIAL_NODES = [
-    { id: 'N-01', name: 'Central Sq × Main Blvd', density: 72, corridor: false, emergency: false },
-    { id: 'N-02', name: 'Park St × Ring Rd', density: 34, corridor: false, emergency: false },
-    { id: 'N-03', name: 'Airport Blvd × NH-4', density: 28, corridor: false, emergency: false },
-    { id: 'N-04', name: 'Tech Park × Outer Ring', density: 61, corridor: false, emergency: false },
-    { id: 'N-05', name: 'Civil Lines × MG Rd', density: 82, corridor: true, emergency: false },
-    { id: 'N-06', name: 'Station Rd × Nehru Nagar', density: 91, corridor: true, emergency: false },
-    { id: 'N-07', name: 'MG Road × Park Street', density: 55, corridor: true, emergency: true },
-    { id: 'N-08', name: 'Jubilee Hills × NH-65', density: 47, corridor: true, emergency: false },
-    { id: 'N-09', name: 'Sec 12 × Residential', density: 18, corridor: false, emergency: false },
-    { id: 'N-10', name: 'Old City × Bazaar Rd', density: 78, corridor: false, emergency: false },
-    { id: 'N-11', name: 'North Ave × Bypass', density: 43, corridor: false, emergency: false },
-    { id: 'N-12', name: 'Outer Ring × Factory Rd', density: 23, corridor: false, emergency: false },
-    { id: 'N-13', name: 'High Court × Museum Rd', density: 67, corridor: false, emergency: false },
-    { id: 'N-14', name: 'East Gate × Highway 7', density: 52, corridor: false, emergency: false },
-    { id: 'N-15', name: 'West End × Lake Blvd', density: 38, corridor: false, emergency: false },
-    { id: 'N-16', name: 'Sec 4 × Arterial Rd', density: 84, corridor: false, emergency: false },
-    { id: 'N-17', name: 'South Ring × Bypass', density: 29, corridor: false, emergency: false },
-    { id: 'N-18', name: 'Commercial St × CBD', density: 95, corridor: false, emergency: false },
-    { id: 'N-19', name: 'University Rd × NH-9', density: 41, corridor: false, emergency: false },
-    { id: 'N-20', name: 'Industrial × Canal Rd', density: 14, corridor: false, emergency: false },
-    { id: 'N-21', name: 'Stadium Rd × Bus Depot', density: 73, corridor: false, emergency: false },
-    { id: 'N-22', name: 'Sector 7 × Metro Link', density: 57, corridor: false, emergency: false },
-    { id: 'N-23', name: 'Port Rd × Dock Gate', density: 32, corridor: false, emergency: false },
-    { id: 'N-24', name: 'City Hospital × Sec 9', density: 48, corridor: false, emergency: false },
-];
+/* ── Build node rows from real city intersection data ── */
+function buildCityNodes(cityName) {
+    const cityNodes = CITY_NODES[cityName] || CITY_NODES['Delhi'];
+    // For display purposes give each node a seeded density
+    const seed = cityName.charCodeAt(0) + cityName.length;
+    return cityNodes.map((n, i) => ({
+        id: `N-${String(i + 1).padStart(2, '0')}`,
+        realId: n.id,
+        name: n.name,
+        density: ((seed * 31 + i * 17 + 19) % 80) + 12,  // deterministic 12–91%
+        corridor: i < 2,          // first 2 nodes treated as corridor-active demo
+        emergency: i === 1,       // second node has emergency badge
+    }));
+}
 
-const LANES = [
-    { idx: 15, label: 'North Ring Rd' },
-    { idx: 10, label: 'MG Road' },
-    { idx: 2, label: 'Airport Blvd' },
-    { idx: 11, label: 'Outer Ring Rd' },
-];
+/* ── City-specific lane names ── */
+const CITY_LANES = {
+    Delhi: ['Ring Road', 'MG Road', 'NH-48 (Airport)', 'Outer Ring Rd'],
+    Mumbai: ['Western Express Hwy', 'Eastern Express Hwy', 'Andheri-Kurla Rd', 'SV Road'],
+    Bengaluru: ['Outer Ring Rd', 'Hosur Road', 'Bellary Road', 'Mysore Road'],
+    Hyderabad: ['Inner Ring Rd', 'Outer Ring Rd', 'NH-65', 'Nehru Outer Ring'],
+    Chennai: ['Anna Salai', 'GST Road', 'OMR', 'Inner Ring Road'],
+    Pune: ['FC Road', 'Pune-Mumbai Hwy', 'Satara Road', 'Solapur Road'],
+    Kolkata: ['VIP Road', 'EM Bypass', 'Park Street', 'Jessore Road'],
+    Ahmedabad: ['SG Highway', 'Ring Road', 'Ashram Road', 'SP Ring Road'],
+};
+function getCityLanes(cityName) {
+    return (CITY_LANES[cityName] || CITY_LANES['Delhi']);
+}
 
 function densityColor(d) {
     if (d < 40) return 'text-accent-green';
@@ -192,27 +188,22 @@ function CorridorCard({ corridor, onTerminate }) {
     );
 }
 
-/* ── Demo Corridor Status (auto-animates) ── */
-const DEMO_NODES = [
-    { id: 'DWK', name: 'Dwarka Sector 12' },
-    { id: 'DWM', name: 'Dwarka Mor Chowk' },
-    { id: 'DHK', name: 'Dhaula Kuan Flyover' },
-    { id: 'AIM', name: 'AIIMS New Delhi' },
-    { id: 'LPN', name: 'Lajpat Nagar' },
-];
-
-function DemoCorridorStatus({ etaStr }) {
+/* ── Demo Corridor Status — city-aware, auto-animates ── */
+function DemoCorridorStatus({ etaStr, cityName }) {
+    const cityNodes = CITY_NODES[cityName] || CITY_NODES['Delhi'];
+    const demoNodes = cityNodes.slice(0, 5).map(n => ({ id: n.id, name: n.name }));
     const [activeIdx, setActiveIdx] = useState(0);
+    // Reset animation when city changes
+    useEffect(() => { setActiveIdx(0); }, [cityName]);
     useEffect(() => {
-        // Advance one node every 8 seconds to demo the animation
         const t = setInterval(() => {
-            setActiveIdx(i => (i + 1) % DEMO_NODES.length);
+            setActiveIdx(i => (i + 1) % demoNodes.length);
         }, 8000);
         return () => clearInterval(t);
-    }, []);
+    }, [cityName]);
     return (
         <CorridorStatusBox
-            nodes={DEMO_NODES}
+            nodes={demoNodes}
             activeIdx={activeIdx}
             eta={etaStr}
             stops={0}
@@ -221,7 +212,7 @@ function DemoCorridorStatus({ etaStr }) {
 }
 
 export default function DashboardPage() {
-    const [nodes, setNodes] = useState(INITIAL_NODES);
+    const [nodes, setNodes] = useState(() => buildCityNodes('Delhi'));
     const [selectedCity, setSelectedCity] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
     const [etaSec, setEtaSec] = useState(222);
@@ -237,11 +228,12 @@ export default function DashboardPage() {
         { name: 'Kolkata', state: 'West Bengal' },
         { name: 'Pune', state: 'Maharashtra' },
         { name: 'Ahmedabad', state: 'Gujarat' },
-        { name: 'Jaipur', state: 'Rajasthan' },
-        { name: 'Surat', state: 'Gujarat' },
-        { name: 'Lucknow', state: 'Uttar Pradesh' },
-        { name: 'Chandigarh', state: 'Punjab' },
     ];
+
+    /* Reset nodes when city changes */
+    useEffect(() => {
+        if (selectedCity) setNodes(buildCityNodes(selectedCity));
+    }, [selectedCity]);
 
     /* Live density update */
     useEffect(() => {
@@ -294,8 +286,14 @@ export default function DashboardPage() {
         } catch { }
     }
 
+    // Only show corridors for the currently selected city
+    const cityLiveCorridors = selectedCity
+        ? liveCorridors.filter(c => !c.city || c.city === selectedCity)
+        : liveCorridors;
+
     const etaStr = `${Math.floor(etaSec / 60)}m ${(etaSec % 60).toString().padStart(2, '0')}s`;
     const avgDensity = Math.round(nodes.reduce((s, n) => s + n.density, 0) / nodes.length);
+    const cityLanes = selectedCity ? getCityLanes(selectedCity) : getCityLanes('Delhi');
 
     /* ── City picker ── */
     if (!selectedCity) {
@@ -385,26 +383,26 @@ export default function DashboardPage() {
                     <section>
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">🟢 Live Green Corridors</h2>
-                                {liveCorridors.length > 0 && (
-                                    <span className="text-[0.6rem] font-bold bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan rounded-full px-2 py-0.5">{liveCorridors.length} Active</span>
+                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">🟢 Live Green Corridors — {selectedCity}</h2>
+                                {cityLiveCorridors.length > 0 && (
+                                    <span className="text-[0.6rem] font-bold bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan rounded-full px-2 py-0.5">{cityLiveCorridors.length} Active</span>
                                 )}
                             </div>
                             <Link href="/portal" className="text-[0.7rem] font-semibold text-accent-cyan hover:text-white transition-colors no-underline">+ New Corridor →</Link>
                         </div>
 
-                        {liveCorridors.length === 0 ? (
+                        {cityLiveCorridors.length === 0 ? (
                             <div className="border border-white/5 border-dashed rounded-2xl p-8 text-center">
                                 <div className="text-3xl mb-3">🚑</div>
-                                <div className="text-sm font-semibold text-text-muted mb-2">No active corridors</div>
-                                <p className="text-xs text-text-muted mb-4">Green corridors activated from the portal appear here in real time.</p>
+                                <div className="text-sm font-semibold text-text-muted mb-2">No active corridors in {selectedCity}</div>
+                                <p className="text-xs text-text-muted mb-4">Corridors activated from the portal for this city appear here in real time.</p>
                                 <Link href="/portal" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline hover:shadow-[0_0_20px_rgba(0,245,255,0.4)] transition-all">
                                     Activate Green Corridor
                                 </Link>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                                {liveCorridors.map(c => (
+                                {cityLiveCorridors.map(c => (
                                     <CorridorCard key={c.id} corridor={c} onTerminate={() => terminateCorridor(c.id)} />
                                 ))}
                             </div>
@@ -415,8 +413,8 @@ export default function DashboardPage() {
                     <section className="relative">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">⚡ Intersection Nodes</h2>
-                                <Badge variant="cyan">24 Active</Badge>
+                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">⚡ Intersection Nodes — {selectedCity}</h2>
+                                <Badge variant="cyan">{nodes.length} Active</Badge>
                             </div>
                             <div className="flex items-center gap-3 text-[0.65rem] text-text-muted">
                                 {[['#00ff9d', 'Low'], ['#ffb800', 'Med'], ['#ff3b5c', 'High']].map(([c, l]) => (
@@ -440,15 +438,15 @@ export default function DashboardPage() {
 
                     {/* Active corridor (static/demo) */}
                     <div className="bg-bg-card border border-white/5 rounded-2xl p-5">
-                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">🚑 Demo Corridor</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">🚑 Demo Corridor — {selectedCity}</div>
                         <div className="bg-accent-cyan/[0.04] border border-accent-cyan/15 rounded-xl p-4">
                             <div className="flex flex-wrap gap-1.5 mb-3"><Badge variant="red">AMB-042</Badge><Badge variant="green">ACTIVE</Badge></div>
-                            <div className="text-xs font-semibold mb-1">📍 Dwarka Sector 12</div>
+                            <div className="text-xs font-semibold mb-1">📍 {(CITY_NODES[selectedCity] || CITY_NODES['Delhi'])[0]?.name || 'Start'}</div>
                             <div className="w-0.5 h-3 bg-gradient-to-b from-accent-green to-accent-cyan ml-2 my-1.5" />
-                            <div className="text-xs font-semibold mb-3">🏥 AIIMS New Delhi</div>
+                            <div className="text-xs font-semibold mb-3">🏥 {(CITY_NODES[selectedCity] || CITY_NODES['Delhi'])[4]?.name || 'End'}</div>
 
-                            {/* Demo CorridorStatusBox with animated index */}
-                            <DemoCorridorStatus etaStr={etaStr} />
+                            {/* Demo CorridorStatusBox with city-specific nodes */}
+                            <DemoCorridorStatus etaStr={etaStr} cityName={selectedCity} />
 
                             <div className="flex gap-5 pt-3 border-t border-white/5 mt-3">
                                 {[['Speed', `${speed} km/h`, 'text-white'], ['Stops', '0', 'text-accent-green']].map(([l, v, c]) => (
@@ -460,10 +458,10 @@ export default function DashboardPage() {
 
                     {/* Lane density */}
                     <div className="bg-bg-card border border-white/5 rounded-2xl p-5">
-                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">🚗 Lane Density</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">🚗 Lane Density — {selectedCity}</div>
                         <div className="flex flex-col gap-3">
-                            {LANES.map(({ idx, label }) => {
-                                const d = nodes[idx]?.density ?? 50;
+                            {cityLanes.map((label, i) => {
+                                const d = nodes[i * 4]?.density ?? 50;
                                 const c = d < 40 ? 'progress-fill-green' : d < 70 ? 'progress-fill-amber' : 'progress-fill-red';
                                 const tc = d < 40 ? 'text-accent-green' : d < 70 ? 'text-accent-amber' : 'text-accent-red';
                                 return (

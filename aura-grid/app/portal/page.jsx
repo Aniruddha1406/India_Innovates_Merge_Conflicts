@@ -1,20 +1,20 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Badge from '@/components/Badge';
 import StatusDot from '@/components/StatusDot';
 import CorridorStatusBox from '@/components/CorridorStatusBox';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
-import { MAPS_LIBRARIES, DELHI_NODES } from '@/components/DelhiMap';
+import { MAPS_LIBRARIES } from '@/components/DelhiMap';
 import { useAuth } from '@/components/AuthProvider';
 import { createCorridor, terminateCorridor, subscribeActiveCOrridors } from '@/lib/firestore';
+import { pickCorridorNodes } from '@/lib/cityNodes';
 
 const DelhiMap = dynamic(() => import('@/components/DelhiMap'), {
     ssr: false,
     loading: () => (
-        <div style={{ height: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050c18', borderRadius: '12px', color: '#00f5ff', fontSize: '0.9rem' }}>
+        <div style={{ height: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050c18', borderRadius: '12px', color: '#00f5ff', fontSize: '0.9rem' }}>
             Loading map…
         </div>
     )
@@ -30,36 +30,6 @@ const CITIES = [
     { name: 'Kolkata', bounds: { north: 22.639, south: 22.395, east: 88.430, west: 88.246 } },
     { name: 'Ahmedabad', bounds: { north: 23.121, south: 22.922, east: 72.705, west: 72.490 } },
 ];
-
-// ── Pick the N DELHI_NODES geographically closest to the route midpoints ──────
-function pickCorridorNodes(originLatLng, destLatLng, count = 5) {
-    if (!originLatLng || !destLatLng) return [];
-
-    // Build evenly-spaced waypoints along the straight-line route
-    const waypoints = [];
-    for (let i = 0; i <= count + 1; i++) {
-        const t = i / (count + 1);
-        waypoints.push({
-            lat: originLatLng.lat + (destLatLng.lat - originLatLng.lat) * t,
-            lng: originLatLng.lng + (destLatLng.lng - originLatLng.lng) * t,
-        });
-    }
-
-    // For each waypoint, pick the closest Delhi node not already used
-    const used = new Set();
-    const picked = [];
-    for (const wp of waypoints.slice(1, -1)) {
-        let best = null, bestDist = Infinity;
-        for (const node of DELHI_NODES) {
-            if (used.has(node.id)) continue;
-            const d = Math.hypot(node.pos[0] - wp.lat, node.pos[1] - wp.lng);
-            if (d < bestDist) { bestDist = d; best = node; }
-        }
-        if (best) { used.add(best.id); picked.push(best); }
-    }
-
-    return picked.slice(0, count);
-}
 
 function PlaceInput({ label, placeholder, onPlaceSelect, cityBounds, keyId }) {
     const acRef = useRef(null);
@@ -83,11 +53,12 @@ function PlaceInput({ label, placeholder, onPlaceSelect, cityBounds, keyId }) {
     );
 }
 
-// Opens Google Maps navigation (works as native app on mobile)
-function openNavigation(originLatLng, destLatLng) {
-    if (!originLatLng || !destLatLng) return;
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${originLatLng.lat},${originLatLng.lng}&destination=${destLatLng.lat},${destLatLng.lng}&travelmode=driving`;
-    window.open(url, '_blank');
+// ── Derive node status string from activeNodeIdx ──────────────────────────────
+function getNodeStatus(nodeIdx, activeIdx) {
+    if (nodeIdx < activeIdx) return 'done';
+    if (nodeIdx === activeIdx) return 'active';
+    if (nodeIdx === activeIdx + 1) return 'prep';
+    return 'queued';
 }
 
 export default function PortalPage() {
@@ -117,8 +88,16 @@ export default function PortalPage() {
     const [dupError, setDupError] = useState('');
 
     // ── Corridor node state ──────────────────────────────────────────────────
-    const [corridorNodes, setCorridorNodes] = useState([]);   // [{id, name}]
+    const [corridorNodes, setCorridorNodes] = useState([]);
     const [activeNodeIdx, setActiveNodeIdx] = useState(0);
+    const [activeCdId, setActiveCdId] = useState(null);
+
+    // ── GPS / Navigation state ───────────────────────────────────────────────
+    const [userLocation, setUserLocation] = useState(null);
+    const [navigationMode, setNavigationMode] = useState(false);
+    const [gpsError, setGpsError] = useState('');
+    const [gpsLoading, setGpsLoading] = useState(false);
+    const watchIdRef = useRef(null);
 
     // All active corridors from Firestore (all cities)
     useEffect(() => {
@@ -133,15 +112,78 @@ export default function PortalPage() {
         return () => clearInterval(t);
     }, [corridorActive]);
 
+    // Stop GPS watch when navigation ends
+    useEffect(() => {
+        return () => {
+            if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
+        };
+    }, []);
+
     const handleRouteResult = useCallback((info) => {
         setRouteInfo(info);
         setEtaSec(info.durationSec || 0);
     }, []);
 
-    // ── Callback fired by DelhiMap as ambulance crosses each node ──────────
+    // ── Use My Location ───────────────────────────────────────────────────────
+    function useMyLocation() {
+        if (!navigator.geolocation) {
+            setGpsError('Geolocation is not supported by your browser.');
+            return;
+        }
+        setGpsLoading(true);
+        setGpsError('');
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                setUserLocation(loc);
+                setOriginLatLng(loc);
+                setOriginName('📍 My Current Location');
+                setShowCorridor(false);
+                setCorridorActive(false);
+                setRouteInfo(null);
+                setDupError('');
+                setGpsLoading(false);
+            },
+            (err) => {
+                setGpsError('Location access denied. Please allow location in browser settings.');
+                setGpsLoading(false);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+
+    // ── Start In-App Navigation ───────────────────────────────────────────────
+    function startNavigation() {
+        if (!navigator.geolocation) {
+            setGpsError('Geolocation not supported.');
+            return;
+        }
+        setGpsError('');
+        setNavigationMode(true);
+        // Clear any existing watch
+        if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = navigator.geolocation.watchPosition(
+            (pos) => {
+                setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            },
+            (err) => {
+                setGpsError('GPS signal lost. Using last known position.');
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
+        );
+    }
+
+    function stopNavigation() {
+        if (watchIdRef.current != null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+        }
+        setNavigationMode(false);
+    }
+
+    // ── Callback fired by DelhiMap as ambulance crosses each node ──────────────
     const handleNodeAdvance = useCallback((nodeIdx) => {
         setActiveNodeIdx(nodeIdx);
-        // Persist to localStorage so dashboard can read it
         try {
             const raw = localStorage.getItem('aura_active_corridors');
             const corridors = raw ? JSON.parse(raw) : [];
@@ -152,12 +194,35 @@ export default function PortalPage() {
         } catch { }
     }, []);
 
+    // ── Auto-terminate when ambulance reaches destination ──────────────────────
+    const handleArrival = useCallback(async () => {
+        setActiveNodeIdx(prev => prev + 100);
+        setTimeout(async () => {
+            setCorridorActive(false);
+            setShowCorridor(false);
+            setCorridorNodes([]);
+            setActiveNodeIdx(0);
+            stopNavigation();
+            if (activeCdId) {
+                try { await terminateCorridor(activeCdId); } catch { }
+                setActiveCdId(null);
+            }
+            try {
+                const raw = localStorage.getItem('aura_active_corridors');
+                const corridors = raw ? JSON.parse(raw) : [];
+                const updated = corridors.filter(c => c.id !== activeCdId);
+                localStorage.setItem('aura_active_corridors', JSON.stringify(updated));
+            } catch { }
+        }, 2500);
+    }, [activeCdId]);
+
     function resetRoute() {
         setOriginLatLng(null); setDestLatLng(null);
         setOriginName(''); setDestName('');
         setShowCorridor(false); setCorridorActive(false);
         setRouteInfo(null); setDupError('');
         setCorridorNodes([]); setActiveNodeIdx(0);
+        stopNavigation();
     }
 
     function calcRoute() {
@@ -169,34 +234,21 @@ export default function PortalPage() {
     async function initiateWave() {
         if (!user || !originLatLng || !destLatLng) return;
 
-        // ── Duplicate Check ──────────────────────────────────────────
         const vehicleNum = isAdmin && adminVehicle.trim()
             ? adminVehicle.trim().toUpperCase()
             : (userProfile?.vehicleNumber || 'N/A');
 
-        const sameVehicleActive = activeCds.find(
-            c => c.vehicleNumber === vehicleNum && c.city === city
-        );
-        if (sameVehicleActive) {
-            setDupError(`Vehicle ${vehicleNum} already has an active corridor in ${city}. Terminate it first.`);
-            return;
-        }
+        const sameVehicleActive = activeCds.find(c => c.vehicleNumber === vehicleNum && c.city === city);
+        if (sameVehicleActive) { setDupError(`Vehicle ${vehicleNum} already has an active corridor in ${city}. Terminate it first.`); return; }
 
-        const sameRouteActive = activeCds.find(
-            c => c.city === city &&
-                c.originName === originName &&
-                c.destName === destName
-        );
-        if (sameRouteActive) {
-            setDupError(`This route (${originName} → ${destName}) already has an active corridor in ${city}.`);
-            return;
-        }
+        const sameRouteActive = activeCds.find(c => c.city === city && c.originName === originName && c.destName === destName);
+        if (sameRouteActive) { setDupError(`This route already has an active corridor in ${city}.`); return; }
 
         setDupError('');
         setCreating(true);
 
-        // ── Compute corridor nodes ───────────────────────────────────
-        const nodes = pickCorridorNodes(originLatLng, destLatLng, 5);
+        // ── Compute corridor nodes using city-specific data ──────────────────
+        const nodes = pickCorridorNodes(originLatLng, destLatLng, city, 5);
         setCorridorNodes(nodes);
         setActiveNodeIdx(0);
 
@@ -215,7 +267,6 @@ export default function PortalPage() {
                 corridorNodes: nodes.map(n => ({ id: n.id, name: n.name })),
             });
 
-            // Persist to localStorage for dashboard
             try {
                 const existing = localStorage.getItem('aura_active_corridors');
                 const arr = existing ? JSON.parse(existing) : [];
@@ -233,7 +284,9 @@ export default function PortalPage() {
                 localStorage.setItem('aura_active_corridors', JSON.stringify(arr));
             } catch { }
 
+            setActiveCdId(docRef.id);
             setCorridorActive(true);
+            // GPS navigation is started manually by user during travel — not auto-started here
         } catch (err) {
             console.error('Failed to create corridor:', err);
         } finally {
@@ -246,7 +299,16 @@ export default function PortalPage() {
         await terminateCorridor(corridorId);
     }
 
-    // ── City-filtered corridors (only show same city as selector) ──
+    // ── Compute signal markers for map ─────────────────────────────────────────
+    const corridorNodeMarkers = corridorNodes
+        .filter(n => n.pos)
+        .map((n, i) => ({
+            lat: n.pos[0],
+            lng: n.pos[1],
+            name: n.name,
+            status: getNodeStatus(i, activeNodeIdx),
+        }));
+
     const cityCorridors = activeCds.filter(c => c.city === city);
     const canCalc = !!originLatLng && !!destLatLng;
     const cityBounds = CITIES.find(c => c.name === city)?.bounds;
@@ -262,7 +324,6 @@ export default function PortalPage() {
                     <div className="w-8 h-8 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan">⬡</div>
                     <span><span className="text-accent-cyan">AURA</span>-GRID</span>
                 </Link>
-
                 <div className="flex items-center gap-2.5">
                     {user ? (
                         <>
@@ -270,11 +331,8 @@ export default function PortalPage() {
                             <Badge variant="green"><StatusDot color="green" className="mr-1" />{userProfile?.name || user.email}</Badge>
                             {userProfile?.vehicleNumber && <Badge variant="violet">{userProfile.vehicleNumber}</Badge>}
                         </>
-                    ) : (
-                        <span className="text-text-muted text-xs">Viewing as Guest</span>
-                    )}
+                    ) : <span className="text-text-muted text-xs">Viewing as Guest</span>}
                 </div>
-
                 <div className="flex items-center gap-2">
                     <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">Home</Link>
                     <Link href="/dashboard" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">Dashboard</Link>
@@ -289,7 +347,7 @@ export default function PortalPage() {
 
             <div className="relative z-10 max-w-[1400px] mx-auto px-10 py-8">
 
-                {/* ── City Selector (global, always visible) ── */}
+                {/* ── City Selector ── */}
                 <div className="flex items-center gap-4 mb-6">
                     <div className="flex items-center gap-3 flex-1">
                         <span className="text-text-muted text-sm font-semibold uppercase tracking-wide whitespace-nowrap">Select City:</span>
@@ -313,16 +371,41 @@ export default function PortalPage() {
                     {/* ── LEFT COLUMN ── */}
                     <div className="flex flex-col gap-5">
 
-                        {/* Route Finder (always public) */}
+                        {/* Route Finder */}
                         <div className="bg-bg-card border border-white/5 rounded-xl p-6">
                             <h3 className="text-lg font-bold mb-1">Route Finder</h3>
-                            <p className="text-text-secondary text-sm mb-4">Find the best route with live {city} traffic — no sign-in needed.</p>
+                            <p className="text-text-secondary text-sm mb-4">Find the best route with live {city} traffic. Use GPS or type an address.</p>
 
                             <div className="flex flex-col gap-3.5">
-                                {mapsLoaded ? (
-                                    <PlaceInput key={`origin-${city}`} label="Origin" placeholder={`Start point in ${city}...`} cityBounds={cityBounds}
-                                        onPlaceSelect={p => { setOriginLatLng({ lat: p.lat, lng: p.lng }); setOriginName(p.name); setShowCorridor(false); setCorridorActive(false); setRouteInfo(null); setDupError(''); }} />
-                                ) : <div className="flex flex-col gap-1.5"><label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Origin</label><input disabled className="input-field opacity-50" placeholder="Loading Google Maps..." /></div>}
+                                {/* Origin row with GPS button */}
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">Origin</label>
+                                    <div className="flex gap-2">
+                                        {mapsLoaded ? (
+                                            <div className="flex-1">
+                                                <PlaceInput key={`origin-${city}`} label="" placeholder={`Start point in ${city}...`} cityBounds={cityBounds}
+                                                    onPlaceSelect={p => { setOriginLatLng({ lat: p.lat, lng: p.lng }); setOriginName(p.name); setShowCorridor(false); setCorridorActive(false); setRouteInfo(null); setDupError(''); }} />
+                                            </div>
+                                        ) : <input disabled className="input-field flex-1 opacity-50" placeholder="Loading Google Maps..." />}
+
+                                        {/* 📍 One-tap GPS origin button */}
+                                        <button
+                                            onClick={useMyLocation}
+                                            disabled={gpsLoading}
+                                            title="Set origin to my current GPS location"
+                                            className="flex-shrink-0 w-11 h-11 rounded-xl bg-[#4285F4]/15 border border-[#4285F4]/40 text-[#4285F4] hover:bg-[#4285F4]/30 transition-all font-sans cursor-pointer flex items-center justify-center text-base disabled:opacity-50"
+                                        >
+                                            {gpsLoading ? '⏳' : '📍'}
+                                        </button>
+                                    </div>
+                                    {originName === '📍 My Current Location' && (
+                                        <div className="text-[0.7rem] text-[#4285F4] font-semibold flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#4285F4] animate-pulse inline-block" />
+                                            Using GPS as origin
+                                        </div>
+                                    )}
+                                    {gpsError && <div className="text-[0.7rem] text-accent-red">{gpsError}</div>}
+                                </div>
 
                                 <div className="flex items-center gap-2.5">
                                     <div className="flex-1 h-px bg-white/10" />
@@ -358,17 +441,9 @@ export default function PortalPage() {
                                         </div>
                                     </div>
 
-                                    {/* GPS Navigate Button (always shown) */}
-                                    <button onClick={() => openNavigation(originLatLng, destLatLng)}
-                                        className="w-full py-3 rounded-xl font-bold bg-gradient-to-br from-[#4285F4] to-[#1a73e8] text-white hover:shadow-[0_0_20px_rgba(66,133,244,0.4)] transition-all font-sans cursor-pointer flex items-center justify-center gap-2">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
-                                        Start Navigation in Google Maps
-                                    </button>
-
-                                    {/* Create Corridor — auth required */}
+                                    {/* Corridor creation — auth required */}
                                     {user ? (
                                         <>
-                                            {/* Corridor type selector */}
                                             <div className="flex gap-2">
                                                 {[['ambulance', 'Ambulance'], ['fire', 'Fire Truck'], ['vvip', 'VVIP']].map(([v, l]) => (
                                                     <button key={v} onClick={() => setCorridorType(v)}
@@ -378,7 +453,6 @@ export default function PortalPage() {
                                                 ))}
                                             </div>
 
-                                            {/* Admin vehicle override */}
                                             {isAdmin && (
                                                 <div className="flex flex-col gap-1.5">
                                                     <label className="text-[0.78rem] font-semibold text-accent-red uppercase tracking-wide">Vehicle # Override (Admin)</label>
@@ -387,9 +461,7 @@ export default function PortalPage() {
                                             )}
 
                                             {dupError && (
-                                                <div className="bg-accent-amber/10 border border-accent-amber/30 rounded-xl p-3 text-sm text-accent-amber">
-                                                    {dupError}
-                                                </div>
+                                                <div className="bg-accent-amber/10 border border-accent-amber/30 rounded-xl p-3 text-sm text-accent-amber">{dupError}</div>
                                             )}
 
                                             {!corridorActive ? (
@@ -398,36 +470,36 @@ export default function PortalPage() {
                                                     {creating ? 'Activating...' : 'Initiate Green Wave'}
                                                 </button>
                                             ) : (
-                                                /* ── ACTIVE CORRIDOR — show CorridorStatusBox ── */
                                                 <div className="flex flex-col gap-4">
-                                                    {/* Pulse header */}
                                                     <div className="flex items-center gap-2">
                                                         <span className="w-2.5 h-2.5 rounded-full bg-accent-green animate-pulse" />
                                                         <span className="text-sm font-bold text-accent-green">GREEN WAVE ACTIVE</span>
                                                         <span className="ml-auto text-xs font-mono text-accent-cyan">{etaStr}</span>
                                                     </div>
-
-                                                    {/* Live corridor node status */}
                                                     {corridorNodes.length > 0 && (
-                                                        <CorridorStatusBox
-                                                            nodes={corridorNodes}
-                                                            activeIdx={activeNodeIdx}
-                                                            eta={etaStr}
-                                                            stops={0}
-                                                        />
+                                                        <CorridorStatusBox nodes={corridorNodes} activeIdx={activeNodeIdx} eta={etaStr} stops={0} />
                                                     )}
-
-                                                    {/* GPS Navigate for active corridor */}
-                                                    <button onClick={() => openNavigation(originLatLng, destLatLng)}
-                                                        className="w-full py-2.5 rounded-xl font-bold text-sm bg-[#4285F4] text-white hover:bg-[#1a73e8] transition-all font-sans cursor-pointer flex items-center justify-center gap-2">
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
-                                                        Navigate in Google Maps
-                                                    </button>
+                                                    {/* Navigation starts here — physically travelling */}
+                                                    {!navigationMode ? (
+                                                        <button onClick={startNavigation}
+                                                            className="w-full py-3 rounded-xl font-bold bg-gradient-to-br from-[#4285F4] to-[#1a73e8] text-white hover:shadow-[0_0_20px_rgba(66,133,244,0.4)] transition-all font-sans cursor-pointer flex items-center justify-center gap-2">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
+                                                            Start Live GPS Tracking
+                                                        </button>
+                                                    ) : (
+                                                        <div className="flex gap-2">
+                                                            <div className="flex-1 flex items-center gap-2 bg-[#4285F4]/10 border border-[#4285F4]/30 rounded-xl px-4 py-2.5">
+                                                                <span className="w-2 h-2 rounded-full bg-[#4285F4] animate-pulse" />
+                                                                <span className="text-sm font-bold text-[#4285F4]">📍 GPS Tracking Live</span>
+                                                            </div>
+                                                            <button onClick={stopNavigation}
+                                                                className="px-4 py-2.5 rounded-xl text-xs font-bold text-accent-red bg-accent-red/10 border border-accent-red/30 font-sans cursor-pointer">Stop</button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </>
                                     ) : (
-                                        /* Not logged in — invite to sign in for corridor creation */
                                         <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 text-center">
                                             <div className="text-sm font-semibold mb-1">Want a Green Corridor?</div>
                                             <p className="text-text-muted text-xs mb-3">Sign in to activate a priority green signal corridor for ambulances, fire trucks &amp; VVIP convoys.</p>
@@ -445,22 +517,36 @@ export default function PortalPage() {
                     {/* ── RIGHT COLUMN ── */}
                     <div className="flex flex-col gap-5">
 
-                        {/* Map */}
+                        {/* Map with GPS + signal overlays */}
                         <div className="bg-bg-card border border-white/5 rounded-xl p-5">
                             <div className="flex justify-between items-center mb-3">
                                 <div>
                                     <h3 className="text-base font-bold">{city} Traffic Map</h3>
-                                    <p className="text-text-secondary text-xs">{showCorridor && originName && destName ? `${originName} → ${destName}` : 'Select origin and destination above'}</p>
+                                    <p className="text-text-secondary text-xs">
+                                        {navigationMode ? '📍 Live GPS Navigation Active' :
+                                            showCorridor && originName && destName ? `${originName} → ${destName}` :
+                                                'Select origin and destination above'}
+                                    </p>
                                 </div>
-                                <Badge variant="cyan"><StatusDot color="cyan" className="mr-1" />Live</Badge>
+                                <div className="flex items-center gap-2">
+                                    {navigationMode && <Badge variant="cyan"><span className="w-1.5 h-1.5 rounded-full bg-[#4285F4] inline-block mr-1 animate-pulse" />GPS</Badge>}
+                                    <Badge variant="cyan"><StatusDot color="cyan" className="mr-1" />Live</Badge>
+                                </div>
                             </div>
-                            <DelhiMap showCorridor={showCorridor} corridorActive={corridorActive}
-                                originLatLng={originLatLng} destLatLng={destLatLng}
-                                originName={originName} destName={destName}
+                            <DelhiMap
+                                showCorridor={showCorridor}
+                                corridorActive={corridorActive}
+                                originLatLng={originLatLng}
+                                destLatLng={destLatLng}
+                                originName={originName}
+                                destName={destName}
                                 onRouteResult={handleRouteResult}
-                                onNodeUpdate={() => { }}
+                                onNodeUpdate={handleArrival}
                                 onNodeAdvance={handleNodeAdvance}
                                 corridorNodeCount={corridorNodes.length}
+                                corridorNodeMarkers={corridorNodeMarkers}
+                                userLocation={userLocation}
+                                navigationMode={navigationMode}
                             />
                         </div>
 
@@ -484,6 +570,8 @@ export default function PortalPage() {
                                 <div className="flex flex-col gap-3">
                                     {cityCorridors.map(c => {
                                         const canTerminate = user && (isAdmin || c.uid === user.uid);
+                                        const cNodes = c.corridorNodes || [];
+                                        const cActiveIdx = corridorActive && c.originName === originName ? activeNodeIdx : 0;
                                         return (
                                             <div key={c.id} className="bg-accent-cyan/[0.03] border border-accent-cyan/20 rounded-xl p-4">
                                                 <div className="flex justify-between items-start mb-2">
@@ -493,13 +581,6 @@ export default function PortalPage() {
                                                         <span className="text-[0.65rem] text-text-muted capitalize border border-white/10 rounded-full px-2 py-0.5">{c.vehicleType}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        {c.originLatLng && c.destLatLng && (
-                                                            <button onClick={() => openNavigation(c.originLatLng, c.destLatLng)}
-                                                                title="Navigate in Google Maps"
-                                                                className="text-[0.6rem] font-bold text-[#4285F4] border border-[#4285F4]/30 rounded-lg px-2 py-0.5 bg-[#4285F4]/10 hover:bg-[#4285F4]/20 font-sans cursor-pointer">
-                                                                GPS
-                                                            </button>
-                                                        )}
                                                         {canTerminate && (
                                                             <button onClick={() => handleTerminate(c.id)}
                                                                 className="text-[0.6rem] font-bold text-accent-red border border-accent-red/30 rounded-lg px-2 py-0.5 bg-accent-red/10 hover:bg-accent-red/20 font-sans cursor-pointer">
@@ -509,19 +590,11 @@ export default function PortalPage() {
                                                     </div>
                                                 </div>
                                                 <div className="text-xs text-text-secondary leading-relaxed">{c.originName} → {c.destName}</div>
-
-                                                {/* Show CorridorStatusBox for Firestore corridors that have nodes */}
-                                                {c.corridorNodes && c.corridorNodes.length > 0 && (
+                                                {cNodes.length > 0 && (
                                                     <div className="mt-3">
-                                                        <CorridorStatusBox
-                                                            nodes={c.corridorNodes}
-                                                            activeIdx={corridorActive && c.originName === originName ? activeNodeIdx : 0}
-                                                            eta={c.durationText || '—'}
-                                                            stops={0}
-                                                        />
+                                                        <CorridorStatusBox nodes={cNodes} activeIdx={cActiveIdx} eta={c.durationText || '—'} stops={0} />
                                                     </div>
                                                 )}
-
                                                 <div className="flex items-center gap-3 mt-2">
                                                     <span className="text-[0.65rem] text-text-muted">By {c.creatorName}</span>
                                                     {c.distanceText && <span className="text-[0.65rem] text-accent-cyan font-mono">{c.distanceText}</span>}
