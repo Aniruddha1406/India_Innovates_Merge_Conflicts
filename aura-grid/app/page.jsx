@@ -83,8 +83,8 @@ function HeroVisual() {
                 <div className="absolute bottom-5 left-1/2 -translate-x-1/2"><TrafficLight state={tlState.ns} /></div>
                 <div className="absolute left-5 top-1/2 -translate-y-1/2"><div className="flex gap-1 bg-[#0a0a0a] border-2 border-[#222] rounded-[14px] p-2">{['red', 'amber', 'green'].map(c => <div key={c} className={`w-[22px] h-[22px] rounded-full ${tlState.ew === c ? `tl-light-active-${c}` : 'bg-white/5'}`} />)}</div></div>
                 <div className="absolute right-5 top-1/2 -translate-y-1/2"><div className="flex gap-1 bg-[#0a0a0a] border-2 border-[#222] rounded-[14px] p-2">{['red', 'amber', 'green'].map(c => <div key={c} className={`w-[22px] h-[22px] rounded-full ${tlState.ew === c ? `tl-light-active-${c}` : 'bg-white/5'}`} />)}</div></div>
-                {/* Ambulance */}
-                <div className="absolute text-xl z-10 leading-none" style={{ top: '140px', left: `${ambX}px` }}>🚑</div>
+                {/* Ambulance — flipped so it faces right (forward direction) */}
+                <div className="absolute text-xl z-10 leading-none" style={{ top: '140px', left: `${ambX}px`, transform: 'scaleX(-1)' }}>🚑</div>
                 {/* Scan line */}
                 <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan to-transparent opacity-80 animate-scan" />
                 {/* Info overlay */}

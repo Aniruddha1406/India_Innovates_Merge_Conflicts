@@ -1,14 +1,16 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
     useJsApiLoader,
     GoogleMap,
     TrafficLayer,
     DirectionsRenderer,
     Marker,
+    Circle,
+    OverlayView,
 } from '@react-google-maps/api';
 
-// Keep exported for any external consumers
+// Keep exported for any external consumers (legacy usage)
 export const DELHI_NODES = [
     { id: 'DWK', name: 'Dwarka Sector 12', pos: [28.5931, 77.0598] },
     { id: 'DWM', name: 'Dwarka Mor Chowk', pos: [28.5936, 77.0737] },
@@ -59,6 +61,40 @@ const DARK_STYLE = [
 
 const MAP_STYLE = { height: '100%', width: '100%' };
 
+// ─── Signal label overlay at corridor node ─────────────────────────────────
+function SignalLabel({ position, status, name }) {
+    const colors = {
+        active: { bg: '#00ff9d', text: '#000', label: '🟢 GREEN' },
+        prep: { bg: '#ffb800', text: '#000', label: '🟡 PREP' },
+        queued: { bg: '#ff3b5c', text: '#fff', label: '🔴 RED' },
+        done: { bg: '#00ff9d', text: '#000', label: '✓ CLEAR' },
+    };
+    const c = colors[status] || colors.queued;
+    return (
+        <OverlayView
+            position={position}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+        >
+            <div style={{
+                transform: 'translate(-50%, -140%)',
+                background: c.bg,
+                color: c.text,
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                padding: '2px 7px',
+                borderRadius: '999px',
+                whiteSpace: 'nowrap',
+                boxShadow: `0 0 8px ${c.bg}88`,
+                pointerEvents: 'none',
+                fontFamily: 'monospace',
+                letterSpacing: '0.04em',
+            }}>
+                {c.label}
+            </div>
+        </OverlayView>
+    );
+}
+
 // ─── Moving ambulance ─────────────────────────────────────────────────────────
 function MovingAmbulance({ path, active, onNodeUpdate, totalNodes, onNodeAdvance, nodeCount }) {
     const [pos, setPos] = useState(path[0] || { lat: 28.59, lng: 77.12 });
@@ -86,10 +122,7 @@ function MovingAmbulance({ path, active, onNodeUpdate, totalNodes, onNodeAdvance
             // Fire onNodeAdvance when ambulance crosses each node threshold
             if (onNodeAdvance && nodeCount > 1) {
                 const fraction = idx.current / (path.length - 1);
-                const nodeIdx = Math.min(
-                    Math.floor(fraction * nodeCount),
-                    nodeCount - 1
-                );
+                const nodeIdx = Math.min(Math.floor(fraction * nodeCount), nodeCount - 1);
                 if (nodeIdx > lastNodeFired.current) {
                     lastNodeFired.current = nodeIdx;
                     onNodeAdvance(nodeIdx);
@@ -112,16 +145,19 @@ function MovingAmbulance({ path, active, onNodeUpdate, totalNodes, onNodeAdvance
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 // Props:
-//   showCorridor   – bool
-//   corridorActive – bool
-//   originLatLng   – { lat, lng }
-//   destLatLng     – { lat, lng }
-//   originName     – string (display)
-//   destName       – string (display)
-//   onRouteResult  – callback({ distanceText, durationText, durationSec })
-//   onNodeUpdate   – callback(n)
-//   onNodeAdvance  – callback(nodeIdx) — fires as ambulance crosses each corridor node
-//   corridorNodeCount – number of corridor nodes (for fraction calculation)
+//   showCorridor        – bool
+//   corridorActive      – bool
+//   originLatLng        – { lat, lng }
+//   destLatLng          – { lat, lng }
+//   originName          – string
+//   destName            – string
+//   onRouteResult       – callback({ distanceText, durationText, durationSec })
+//   onNodeUpdate        – callback(n) — fires when ambulance reaches end
+//   onNodeAdvance       – callback(nodeIdx) — fires as ambulance crosses each node
+//   corridorNodeCount   – number, for path fraction calc
+//   corridorNodeMarkers – [{ lat, lng, status, name }] — signal overlays on map
+//   userLocation        – { lat, lng } | null — live GPS dot
+//   navigationMode      – bool — map follows userLocation when true
 export default function DelhiMap({
     showCorridor,
     corridorActive,
@@ -133,6 +169,9 @@ export default function DelhiMap({
     onNodeUpdate,
     onNodeAdvance,
     corridorNodeCount = 0,
+    corridorNodeMarkers = [],
+    userLocation = null,
+    navigationMode = false,
 }) {
     const { isLoaded, loadError } = useJsApiLoader({
         id: 'google-map-script',
@@ -148,15 +187,20 @@ export default function DelhiMap({
     const origin = originLatLng || { lat: 28.5931, lng: 77.0598 };
     const dest = destLatLng || { lat: 28.5672, lng: 77.2100 };
 
-    const mapCenter = {
+    const mapCenter = userLocation || {
         lat: (origin.lat + dest.lat) / 2,
         lng: (origin.lng + dest.lng) / 2,
     };
 
-    // Recentre map when endpoints change
+    // Re-centre map when navigation mode follows user
     useEffect(() => {
-        if (mapRef.current) mapRef.current.panTo(mapCenter);
-    }, [mapCenter.lat, mapCenter.lng]);
+        if (!mapRef.current) return;
+        if (navigationMode && userLocation) {
+            mapRef.current.panTo(userLocation);
+        } else {
+            mapRef.current.panTo(mapCenter);
+        }
+    }, [userLocation?.lat, userLocation?.lng, navigationMode, mapCenter.lat, mapCenter.lng]);
 
     // Fetch traffic-aware route from Google Directions
     useEffect(() => {
@@ -198,12 +242,12 @@ export default function DelhiMap({
     }, [isLoaded, showCorridor, originLatLng?.lat, originLatLng?.lng, destLatLng?.lat, destLatLng?.lng]);
 
     if (loadError) return (
-        <div style={{ height: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050c18', borderRadius: '12px', color: '#ff3b5c', fontSize: '0.9rem', padding: '1rem', textAlign: 'center' }}>
-            Google Maps failed to load. Check API key & enable Maps JS API + Directions API in Cloud Console.
+        <div style={{ height: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050c18', borderRadius: '12px', color: '#ff3b5c', fontSize: '0.9rem', padding: '1rem', textAlign: 'center' }}>
+            Google Maps failed to load. Check API key &amp; enable Maps JS API + Directions API in Cloud Console.
         </div>
     );
     if (!isLoaded) return (
-        <div style={{ height: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050c18', borderRadius: '12px', color: '#00f5ff', fontSize: '0.9rem' }}>
+        <div style={{ height: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050c18', borderRadius: '12px', color: '#00f5ff', fontSize: '0.9rem' }}>
             Loading Google Maps...
         </div>
     );
@@ -211,22 +255,46 @@ export default function DelhiMap({
     const originIcon = { path: window.google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#00f5ff', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 };
     const destIcon = { path: window.google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#a78bfa', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 };
 
+    // Live GPS dot icon — bright blue pulsing circle
+    const gpsIcon = {
+        path: window.google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: '#4285F4', fillOpacity: 1,
+        strokeColor: '#fff', strokeWeight: 3,
+    };
+
+    // Signal circle options per status
+    const signalCircleOpts = {
+        active: { strokeColor: '#00ff9d', fillColor: '#00ff9d', fillOpacity: 0.25, strokeWeight: 3, radius: 80 },
+        prep: { strokeColor: '#ffb800', fillColor: '#ffb800', fillOpacity: 0.2, strokeWeight: 2, radius: 70 },
+        queued: { strokeColor: '#ff3b5c', fillColor: '#ff3b5c', fillOpacity: 0.15, strokeWeight: 2, radius: 60 },
+        done: { strokeColor: '#00ff9d', fillColor: '#00ff9d', fillOpacity: 0.1, strokeWeight: 1, radius: 50 },
+    };
+
     return (
-        <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', height: '380px' }}>
+        <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', height: '420px' }}>
             {loading && (
                 <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(5,12,24,0.82)', color: '#00f5ff', fontSize: '0.9rem', fontWeight: 600 }}>
                     Fetching traffic-aware route...
                 </div>
             )}
 
+            {/* Navigation mode indicator */}
+            {navigationMode && (
+                <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, background: '#4285F4', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '4px 10px', borderRadius: '999px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', display: 'inline-block', animation: 'pulse-gps 1.2s ease-in-out infinite' }} />
+                    LIVE NAVIGATION
+                </div>
+            )}
+
             <GoogleMap
                 mapContainerStyle={MAP_STYLE}
                 center={mapCenter}
-                zoom={12}
+                zoom={navigationMode ? 15 : 12}
                 options={{ styles: DARK_STYLE, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: true, clickableIcons: false, gestureHandling: 'cooperative' }}
                 onLoad={map => { mapRef.current = map; }}
             >
-                {/* Live Delhi traffic flow overlay */}
+                {/* Live traffic overlay */}
                 <TrafficLayer />
 
                 {/* Origin pin */}
@@ -234,6 +302,24 @@ export default function DelhiMap({
 
                 {/* Destination pin */}
                 {destLatLng && <Marker position={dest} icon={destIcon} title={destName || 'Destination'} zIndex={500} />}
+
+                {/* Live GPS user location dot */}
+                {userLocation && (
+                    <>
+                        {/* Outer pulsing ring */}
+                        <Circle
+                            center={userLocation}
+                            options={{ strokeColor: '#4285F4', fillColor: '#4285F4', fillOpacity: 0.15, strokeWeight: 2, strokeOpacity: 0.6, radius: 120 }}
+                        />
+                        {/* Inner dot */}
+                        <Marker
+                            position={userLocation}
+                            icon={gpsIcon}
+                            title="📍 Your Location"
+                            zIndex={900}
+                        />
+                    </>
+                )}
 
                 {/* Traffic-aware corridor route */}
                 {directions && (
@@ -243,13 +329,28 @@ export default function DelhiMap({
                             suppressMarkers: true,
                             suppressInfoWindows: true,
                             polylineOptions: {
-                                strokeColor: '#00f5ff',
+                                strokeColor: corridorActive ? '#00ff9d' : '#00f5ff',
                                 strokeWeight: 5,
                                 strokeOpacity: corridorActive ? 1.0 : 0.8,
                             },
                         }}
                     />
                 )}
+
+                {/* Signal circles at corridor nodes */}
+                {corridorNodeMarkers.map((node, i) => {
+                    const opts = signalCircleOpts[node.status] || signalCircleOpts.queued;
+                    return (
+                        <React.Fragment key={`node-${i}`}>
+                            <Circle center={{ lat: node.lat, lng: node.lng }} options={opts} />
+                            <SignalLabel
+                                position={{ lat: node.lat, lng: node.lng }}
+                                status={node.status}
+                                name={node.name}
+                            />
+                        </React.Fragment>
+                    );
+                })}
 
                 {/* Animated ambulance */}
                 {corridorActive && routePath.length > 0 && (
@@ -266,13 +367,24 @@ export default function DelhiMap({
 
             {/* Legend */}
             <div style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 5, background: 'rgba(5,12,24,0.92)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: '8px', padding: '6px 10px', fontSize: '0.62rem', color: 'rgba(255,255,255,0.55)' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ width: 20, height: 3, background: '#00f5ff', display: 'inline-block', borderRadius: 2 }} /> Corridor
+                        <span style={{ width: 20, height: 3, background: '#00ff9d', display: 'inline-block', borderRadius: 2 }} /> Corridor
                     </span>
-                    <span>· Traffic signals visible at zoom 15+</span>
+                    {corridorNodeMarkers.length > 0 && <>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00ff9d', display: 'inline-block' }} /> GREEN</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffb800', display: 'inline-block' }} /> PREP</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3b5c', display: 'inline-block' }} /> RED</span>
+                    </>}
                 </div>
             </div>
+
+            <style>{`
+                @keyframes pulse-gps {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.4; transform: scale(1.5); }
+                }
+            `}</style>
         </div>
     );
 }

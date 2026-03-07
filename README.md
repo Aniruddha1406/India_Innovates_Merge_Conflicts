@@ -1,191 +1,381 @@
-# ⬡ AURA-GRID / FLOW-AI
+<div align="center">
 
-> **AI-powered intelligent traffic management system** — Real-time emergency vehicle preemption, dynamic signal control, and verified green corridor dispatch.
+# ⬡ AURA-GRID
+### Adaptive Urban Route Architecture — Intelligent Traffic Grid
 
-Built for the **Smart City Innovation Challenge 2026** · Prototype v1.0
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-12-orange?logo=firebase)](https://firebase.google.com/)
+[![Google Maps](https://img.shields.io/badge/Google_Maps_API-enabled-4285F4?logo=google-maps)](https://developers.google.com/maps)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
+
+**Team Merge_Conflicts · India Innovates Hackathon**
+
+*A real-time AI-powered urban traffic intelligence platform with live green corridor management for emergency vehicles across 8 major Indian cities.*
+
+</div>
 
 ---
 
-## 🧠 What is AURA-GRID?
+## 📋 Table of Contents
 
-AURA-GRID is a full-stack prototype that demonstrates how AI can eliminate the deadly delays ambulances face at red lights, secure VVIP convoys without deploying hundreds of officers, and intelligently reduce city-wide congestion — all in real time.
+- [Overview](#-overview)
+- [The Problem We're Solving](#-the-problem-were-solving)
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [Pages & Routes](#-pages--routes)
+- [Green Corridor System](#-green-corridor-system)
+- [City Coverage](#-city-coverage)
+- [Firebase Setup](#-firebase-setup)
 
-### The Problem
+---
+
+## 🌐 Overview
+
+AURA-GRID is a full-stack Next.js web application built by **Team Merge_Conflicts** for the **India Innovates Hackathon**. It demonstrates how real-time traffic intelligence and green corridor preemption can save lives by eliminating red-light delays for emergency vehicles.
+
+**Three core pillars:**
+
+| Pillar | What It Does |
+|---|---|
+| **AI Traffic Vision** | Live intersection density simulation with real named chowks per city |
+| **Green Corridor Portal** | Dispatcher creates a zero-stop signal priority path for ambulances, fire trucks & VVIP convoys |
+| **Live Dashboard** | City-wide traffic control center showing all active corridors and node statuses in real time |
+
+---
+
+## 🚨 The Problem We're Solving
+
 - 🏥 Ambulances spend **10–15% of journey time** idling at red lights, cutting into the critical 60-minute "Golden Hour"
 - 🛡️ VVIP convoys stopped at traffic lights become **static security targets**
-- 🚗 Fixed-timer traffic signals waste millions of gallons of fuel annually on **empty lanes**
+- 🚗 Fixed-timer signals waste fuel on empty lanes every single day
 
-### The Solution — Three Pillars
-
-| Pillar | What it does |
-|---|---|
-| **A — AI Vision** | YOLOv8 cameras count vehicles in real time and allocate green time proportionally |
-| **B — Visual Failsafe** | Edge-AI detects ambulances from shape/color/strobe — no GPS or portal needed |
-| **C — Green Corridor Portal** | Secure dispatcher portal initiates a zero-stop green wave, preempting signals 30s ahead |
+AURA-GRID solves all three with a connected signals platform that a dispatcher can trigger in seconds.
 
 ---
 
-## 🖥️ Pages
+## ✨ Key Features
 
-| Route | Description |
-|---|---|
-| `/` | Landing page — problem statement, pillars, user journeys, FAQ |
-| `/dashboard` | Live traffic control center — 24 intersection nodes with real-time density |
-| `/portal` | Secure Green Corridor dispatcher — login, route planner, live SVG city map |
+### 🏠 Homepage
+- Animated intersection hero — traffic light cycling N-S / E-W phases
+- Ambulance emoji correctly oriented (faces right, drives left-to-right)
+- Problem statement, three-pillar architecture, user flows
+
+### 🗺️ Portal (`/portal`)
+- **City selector** — Delhi, Mumbai, Bengaluru, Hyderabad, Chennai, Pune, Kolkata, Ahmedabad
+- **📍 Use My Location** — one-tap GPS button (browser Geolocation API) sets real GPS coordinates as route origin
+- **Route Finder** with live traffic-aware Google Directions (departure-time + `BEST_GUESS` traffic model)
+- **Initiate Green Wave** — saves corridor to Firestore, auto-selects 5 real city intersections along the route
+- **CorridorStatusBox** — animated GREEN ✓ / PREP ⏱ / QUEUED badges per intersection node
+- **Traffic signal circle overlays** on the map — colored rings at each node show live signal state
+- **Start Live GPS Tracking** — `watchPosition()` tracks vehicle with pulsing blue dot, map auto-recenters at zoom 15
+- **Auto-terminate** — corridor removed from Firestore + localStorage 2.5 s after vehicle reaches destination
+
+### 📊 Dashboard (`/dashboard`)
+- **City picker** — select from 8 supported cities; all data refreshes instantly
+- **Intersection Nodes grid** — real named chowks for the selected city with live density fluctuation
+- **Live Green Corridors** — filtered per selected city; polls Firestore + localStorage every 1.5 s
+- **Demo Corridor** sidebar — animated CorridorStatusBox using city-specific intersection names
+- **Lane Density** — city-specific major road names with live load bars
+
+### 🔐 Auth (`/auth/login`, `/auth/register`)
+- Firebase Authentication (Email/Password)
+- Role-based access — `admin` role unlocks vehicle number override + full admin panel
+
+### ⚙️ Admin Panel (`/admin`)
+- Admin-only route guarded by Firestore role check
+
+### 🔍 Route Finder (`/routes`)
+- Standalone route search with city-bounded Google Places Autocomplete
 
 ---
 
-## ⚙️ Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
-| **Framework** | [Next.js 14](https://nextjs.org/) (App Router) |
-| **UI Library** | [React 18](https://react.dev/) |
-| **Styling** | [Tailwind CSS 3](https://tailwindcss.com/) + Custom CSS |
-| **Fonts** | Google Fonts — Outfit, JetBrains Mono |
-| **Language** | JavaScript (JSX) |
-| **Runtime** | Node.js 18+ |
+| Framework | Next.js 16 (App Router) |
+| Styling | Tailwind CSS 3 + custom CSS design tokens |
+| Maps | `@react-google-maps/api` — Maps JS, Directions, Places Autocomplete |
+| GPS Tracking | Browser Geolocation API (`getCurrentPosition` + `watchPosition`) |
+| Auth | Firebase Authentication (Email/Password) |
+| Database | Cloud Firestore (real-time corridor sync) |
+| State | React hooks — `useState`, `useEffect`, `useRef`, `useCallback` |
+| Realtime | Firestore `onSnapshot` + `localStorage` polling (1.5 s) |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-prototype/
-├── README.md
-└── aura-grid/                  ← Next.js app root
-    ├── app/
-    │   ├── globals.css          ← Global styles, design tokens, animations
-    │   ├── layout.jsx           ← Root layout (fonts, dark bg, grid overlay)
-    │   ├── page.jsx             ← Landing page (/)
+India_Innovates_Merge_Conflicts/
+│
+├── README.md                     ← You are here
+│
+└── aura-grid/                    ← Next.js application root
+    │
+    ├── app/                      # Pages (Next.js App Router)
+    │   ├── layout.jsx            # Root layout — AuthProvider, global styles
+    │   ├── globals.css           # Design tokens, animations, utility classes
+    │   ├── page.jsx              # Homepage — animated hero, traffic light, ambulance
+    │   ├── portal/
+    │   │   └── page.jsx          # Green Corridor portal — GPS, route finder, wave activation
     │   ├── dashboard/
-    │   │   └── page.jsx         ← Live Dashboard (/dashboard)
-    │   └── portal/
-    │       └── page.jsx         ← Green Corridor Portal (/portal)
+    │   │   └── page.jsx          # Live city dashboard — nodes, corridors, demo
+    │   ├── routes/
+    │   │   └── page.jsx          # Standalone route finder
+    │   ├── admin/
+    │   │   └── page.jsx          # Admin panel (role-gated)
+    │   └── auth/
+    │       ├── login/page.jsx    # Sign-in page
+    │       └── register/page.jsx # Registration page
+    │
     ├── components/
-    │   ├── Navbar.jsx           ← Shared navigation bar
-    │   ├── Badge.jsx            ← Reusable color badge/pill component
-    │   └── StatusDot.jsx        ← Animated pulsing status dot
-    ├── jsconfig.json            ← Path alias config (@/ = project root)
-    ├── tailwind.config.js       ← Design tokens (colors, fonts, animations)
+    │   ├── DelhiMap.jsx          # Google Maps — GPS dot, signal circle overlays,
+    │   │                         #   DirectionsRenderer, TrafficLayer, MovingAmbulance
+    │   ├── CorridorStatusBox.jsx # Animated GREEN / PREP / QUEUED status per node
+    │   ├── AuthProvider.jsx      # Firebase auth context + user profile from Firestore
+    │   ├── Badge.jsx             # Styled badge pill (cyan / green / red / violet)
+    │   ├── StatusDot.jsx         # Pulsing colored dot indicator
+    │   └── Navbar.jsx            # Shared navigation bar
+    │
+    ├── lib/
+    │   ├── firebase.js           # Firebase app + Auth + Firestore initialisation
+    │   ├── firestore.js          # Firestore helpers — createCorridor, terminateCorridor,
+    │   │                         #   subscribeActiveCorridors, setSignalStatus
+    │   └── cityNodes.js          # Real intersection data for 8 cities (~17 nodes each)
+    │                             #   + pickCorridorNodes() geographic selection helper
+    │
+    ├── .env.local                # 🔑 Environment variables — DO NOT COMMIT
     ├── next.config.js
+    ├── tailwind.config.js
     ├── postcss.config.js
     └── package.json
 ```
 
 ---
 
-## 🚀 Getting Started (Run Locally)
+## 🚀 Getting Started
 
 ### Prerequisites
+- **Node.js** ≥ 18 ([nodejs.org](https://nodejs.org) — download LTS, check "Add to PATH" during install)
+- A **Google Cloud** project with these APIs enabled:
+  - ✅ Maps JavaScript API
+  - ✅ Directions API
+  - ✅ Places API
+- A **Firebase** project with:
+  - ✅ Authentication → Email/Password enabled
+  - ✅ Cloud Firestore database created
 
-You need **Node.js** installed on your machine.
-
-1. Go to **[nodejs.org](https://nodejs.org)**
-2. Download the **LTS** version for your OS
-3. Run the installer — make sure **"Add to PATH"** is checked
-4. Restart your terminal after installation
-
-Verify it worked:
-```bash
-node --version   # should print something like v20.x.x
-npm --version    # should print something like 10.x.x
-```
-
----
-
-### Step 1 — Clone the repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/prathamb9/India_Innovates_Merge_Conflicts.git
+git clone https://github.com/Aniruddha1406/India_Innovates_Merge_Conflicts.git
+cd India_Innovates_Merge_Conflicts
 ```
 
-### Step 2 — Navigate into the Next.js app folder
+### 2. Navigate into the app folder
 
 ```bash
-cd India_Innovates_Merge_Conflicts/aura-grid
+cd aura-grid
 ```
 
-> ⚠️ **Important:** You must be inside the `aura-grid` folder, not the root `India_Innovates_Merge_Conflicts` folder.
+> ⚠️ **Important:** All commands below must be run from inside `aura-grid/`, not from the repo root.
 
-### Step 3 — Install dependencies
+### 3. Install dependencies
 
 ```bash
 npm install
 ```
 
-This downloads all required packages into a local `node_modules/` folder. Takes 1–2 minutes on first run.
+> **⚠️ If `npm install` throws dependency errors**, run with force flag instead:
+> ```bash
+> npm install --force
+> ```
 
-### Step 4 — Start the development server
+### 4. Configure environment variables
+
+Create a file named `.env.local` inside `aura-grid/` (see [Environment Variables](#-environment-variables) below).
+
+### 5. Run the development server
 
 ```bash
 npm run dev
 ```
 
-### Step 5 — Open in your browser
+Open [http://localhost:3000](http://localhost:3000) — you should see the AURA-GRID homepage. 🎉
 
-Open **[http://localhost:3000](http://localhost:3000)**
+### 6. Build for production (optional)
 
-You should see the AURA-GRID landing page. 🎉
-
----
-
-## 🧭 Exploring the App
-
-### Landing Page `/`
-- Scroll down to see the **Problem Statement**, **Three Pillar Architecture**, and **User Flows**
-- Use the tabs in "Four Mission-Critical Use Cases" to switch between: Commuter, Ambulance, Visual Override, VVIP Convoy
-- The FAQ accordion answers common "What if?" edge cases
-
-### Live Dashboard `/dashboard`
-- Watch **24 intersection nodes** update their density in real time every 2 seconds
-- Click any node card to open a detail panel with flow stats
-- Click **"Simulate Emergency"** to trigger an emergency alert and node override
-- The right sidebar shows the active ambulance corridor, lane densities, and city-wide stats
-
-### Green Corridor Portal `/portal`
-**Login Credentials (Demo):**
-- Dispatcher ID: `DISP-AMB-0042`
-- Role: `Hospital Dispatcher`
-- OTP: `427819` (pre-filled)
-
-After login:
-1. Select corridor type (Ambulance / Fire Truck / VVIP)
-2. Fill in origin & destination
-3. Click **"Calculate Optimal Route"** — the AI route appears with time comparison
-4. Click **"Initiate Green Wave Now"** — the corridor activates and the ambulance starts moving on the map
+```bash
+npm run build
+npm run start
+```
 
 ---
 
-## 🤝 Contributing (For Team Members)
+## 🔑 Environment Variables
 
-1. **Fork or clone** the repo
-2. Create a new branch: `git checkout -b feature/your-feature-name`
-3. Make your changes inside `aura-grid/`
-4. Test locally with `npm run dev`
-5. Commit: `git commit -m "Add: description of change"`
-6. Push: `git push origin feature/your-feature-name`
-7. Open a **Pull Request** on GitHub
+Create `aura-grid/.env.local` with your keys:
+
+```env
+# ── Google Maps ───────────────────────────────────────────────────────────────
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+
+# ── Firebase ──────────────────────────────────────────────────────────────────
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
+
+> All variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Never put admin/secret keys in these variables.
 
 ---
 
-## 📞 Emergency Contacts (India)
+## 📄 Pages & Routes
+
+| Route | Description | Auth Required |
+|---|---|---|
+| `/` | Homepage — animated hero, problem statement, pillars | No |
+| `/dashboard` | City traffic dashboard — live nodes, corridors, demo | No |
+| `/portal` | Green corridor creation & GPS navigation | Yes (for full features) |
+| `/routes` | Standalone route finder with autocomplete | No |
+| `/admin` | Admin panel | Yes (admin role) |
+| `/auth/login` | Sign in with email/password | No |
+| `/auth/register` | Create a new account | No |
+
+---
+
+## 🚑 Green Corridor System
+
+### End-to-End Flow
+
+```
+1. Operator opens /portal → selects city → enters origin & destination
+         ↓
+2. [Optional] Tap 📍 to auto-fill origin from device GPS (one-tap, no continuous tracking)
+         ↓
+3. Click "Get Best Route"
+   → Google Directions fetches traffic-aware route with live departure-time model
+         ↓
+4. Click "Initiate Green Wave"
+   → pickCorridorNodes() selects 5 real chowks closest to the route path
+   → Corridor saved to Firestore + localStorage
+   → Colored signal circle overlays appear on map (🟢 GREEN / 🟡 AMBER / 🔴 RED)
+         ↓
+5. Demo ambulance drives the route on the embedded Google Map
+   → Each node fires onNodeAdvance() callback
+   → CorridorStatusBox updates live (GREEN → PREP → QUEUED cascade)
+   → Dashboard polls localStorage every 1.5 s and mirrors the status
+         ↓
+6. [During physical travel] Tap "Start Live GPS Tracking"
+   → watchPosition() tracks vehicle — pulsing blue dot follows on map at zoom 15
+   → GPS tracking runs ONLY during travel, NOT during corridor creation
+         ↓
+7. Vehicle arrives → auto-terminate fires after 2.5 s grace period
+   → Corridor removed from Firestore + localStorage
+   → Dashboard and portal both reset automatically
+```
+
+### Signal States
+
+| State | Badge | Meaning |
+|---|---|---|
+| `GREEN ✓` | 🟢 Green circle on map | Ambulance is at this intersection — full green |
+| `PREP ⏱` | 🟡 Amber circle | Next intersection — signal preparing to clear |
+| `QUEUED` | 🔴 Red circle | Downstream — cross-traffic held red |
+| `✓ CLEAR` | 🟢 Dim green | Ambulance has passed — signal returned to normal cycle |
+
+---
+
+## 🏙️ City Coverage
+
+| City | State | Key Intersections |
+|---|---|---|
+| **Delhi** | Delhi NCR | Dwarka Sector 12, Connaught Place, AIIMS, Rohini, Karol Bagh… |
+| **Mumbai** | Maharashtra | Dadar TT Circle, Andheri Junction, BKC, Borivali, Thane… |
+| **Bengaluru** | Karnataka | Silk Board Junction, Hebbal Flyover, Marathahalli, Whitefield… |
+| **Hyderabad** | Telangana | Hitech City, Jubilee Hills Check Post, Ameerpet, Gachibowli… |
+| **Chennai** | Tamil Nadu | Anna Salai, T. Nagar Pondy Bazaar, Koyambedu Hub, Guindy… |
+| **Pune** | Maharashtra | Shivajinagar Circle, Kothrud Depot, FC Road, Hinjewadi… |
+| **Kolkata** | West Bengal | Esplanade Crossing, Park Street, Gariahat More, Howrah Station… |
+| **Ahmedabad** | Gujarat | Navrangpura Circle, ISCON Circle, SG Highway, Satellite Circle… |
+
+Each city has **17–20 real named intersections** defined in `lib/cityNodes.js`.
+
+---
+
+## 🔥 Firebase Setup
+
+### Firestore Security Rules (recommended)
+
+```js
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth.uid == uid;
+    }
+    match /corridors/{corridorId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null &&
+        (resource.data.uid == request.auth.uid ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+  }
+}
+```
+
+---
+
+## 📞 Emergency Numbers (India)
+
 | Service | Number |
 |---|---|
-| 🚑 Ambulance (National) | 102 |
-| 🚒 Fire Brigade | 101 |
-| 👮 Police | 100 |
-| 🏥 All-Emergencies (GVK EMRI) | 108 |
+| 🚑 Ambulance (National) | **102** |
+| 🚒 Fire Brigade | **101** |
+| 👮 Police | **100** |
+| 🏥 All Emergencies (GVK EMRI) | **108** |
 
 ---
 
-## 📄 License
+## 🤝 Team
 
-MIT License — see [LICENSE](LICENSE) for details.
+**Team Merge_Conflicts** — India Innovates Hackathon
+
+| Role | Contribution |
+|---|---|
+| Full-Stack Development | Next.js app, Firebase integration, Google Maps |
+| UI/UX Design | Dark-mode design system, animations, responsive layout |
+| Data Research | Real intersection coordinates for 8 Indian cities |
+| System Architecture | Green corridor algorithm, real-time signal sync |
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make changes inside `aura-grid/`
+4. Test locally: `npm run dev`
+5. Commit: `git commit -m "Add: description of change"`
+6. Push: `git push origin feature/your-feature-name`
+7. Open a Pull Request on GitHub
 
 ---
 
 <div align="center">
-  <strong>Built with ❤️ by <a href="https://github.com/prathamb9/India_Innovates_Merge_Conflicts">Merge_Conflicts</a></strong><br/>
-  <em>AURA-GRID / FLOW-AI · Smart City Innovation Challenge 2026</em>
+
+**Built with ❤️ by [Team Merge_Conflicts](https://github.com/Aniruddha1406/India_Innovates_Merge_Conflicts)**
+
+*AURA-GRID · India Innovates Hackathon · 2026*
+
+*Saving the Golden Hour, one green signal at a time.*
+
 </div>
