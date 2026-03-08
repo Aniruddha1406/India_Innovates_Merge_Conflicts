@@ -482,7 +482,7 @@ export default function HomePage() {
                     </div>
                 </div>
                 <div className="border-t border-white/5 px-10 py-4 flex justify-between items-center flex-wrap gap-3">
-                    <span className="text-[0.7rem] text-text-muted">© 2026 AURA-GRID / FLOW-AI · Smart City Innovation Challenge · Prototype v1.0</span>
+                    <span className="text-[0.7rem] text-text-muted">© 2026 AURA-GRID · India Innovates Hackathon · Prototype v1.0</span>
                     <span className="text-[0.7rem] text-text-muted">Built with Next.js · React · Tailwind CSS</span>
                 </div>
             </footer>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Badge from '@/components/Badge';
 import StatusDot from '@/components/StatusDot';
 import CorridorStatusBox from '@/components/CorridorStatusBox';
+import YoloFailsafePanel from '@/components/YoloFailsafePanel';
 import { CITY_NODES } from '@/lib/cityNodes';
 
 /* ── Build node rows from real city intersection data ── */
@@ -368,8 +369,8 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full px-2.5 py-1">
                         <StatusDot color="green" /><span className="font-mono text-xs text-text-secondary">LIVE</span>
                     </div>
-                    <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline">🔒 Portal</Link>
-                    <Link href="/" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">← Home</Link>
+                    <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline">Portal</Link>
+                    <Link href="/" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">Home</Link>
                 </div>
             </header>
 
@@ -379,11 +380,34 @@ export default function DashboardPage() {
                 {/* LEFT column */}
                 <div className="flex flex-col gap-6">
 
+                    {/* ─── Feature Navigator — evaluator quick-access ─── */}
+                    <div className="bg-bg-card border border-white/5 rounded-2xl p-4">
+                        <div className="text-[0.6rem] font-bold uppercase tracking-widest text-text-muted mb-3">Feature Navigator — Try All Flows</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <Link href="/routes" className="flex flex-col gap-1 bg-accent-cyan/[0.05] border border-accent-cyan/20 hover:border-accent-cyan/50 rounded-xl p-3 no-underline transition-all group">
+                                <span className="text-xs font-bold text-accent-cyan group-hover:text-white transition-colors">Route Finder</span>
+                                <span className="text-[0.6rem] text-text-muted leading-tight">Public commuter — no login</span>
+                            </Link>
+                            <Link href="/portal" className="flex flex-col gap-1 bg-accent-green/[0.05] border border-accent-green/20 hover:border-accent-green/50 rounded-xl p-3 no-underline transition-all group">
+                                <span className="text-xs font-bold text-accent-green group-hover:text-white transition-colors">Green Corridor</span>
+                                <span className="text-[0.6rem] text-text-muted leading-tight">Verified dispatcher — login required</span>
+                            </Link>
+                            <button onClick={() => document.getElementById('yolo-panel')?.scrollIntoView({ behavior: 'smooth' })} className="flex flex-col gap-1 bg-accent-amber/[0.05] border border-accent-amber/20 hover:border-accent-amber/50 rounded-xl p-3 text-left transition-all group cursor-pointer font-sans">
+                                <span className="text-xs font-bold text-accent-amber group-hover:text-white transition-colors">Visual Failsafe</span>
+                                <span className="text-[0.6rem] text-text-muted leading-tight">YOLO detection — scroll down</span>
+                            </button>
+                            <Link href="/admin" className="flex flex-col gap-1 bg-accent-red/[0.05] border border-accent-red/20 hover:border-accent-red/50 rounded-xl p-3 no-underline transition-all group">
+                                <span className="text-xs font-bold text-accent-red group-hover:text-white transition-colors">Admin Panel</span>
+                                <span className="text-[0.6rem] text-text-muted leading-tight">Signal control, users, corridors</span>
+                            </Link>
+                        </div>
+                    </div>
+
                     {/* Live Green Corridors */}
                     <section>
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">🟢 Live Green Corridors — {selectedCity}</h2>
+                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">Live Green Corridors — {selectedCity}</h2>
                                 {cityLiveCorridors.length > 0 && (
                                     <span className="text-[0.6rem] font-bold bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan rounded-full px-2 py-0.5">{cityLiveCorridors.length} Active</span>
                                 )}
@@ -413,7 +437,7 @@ export default function DashboardPage() {
                     <section className="relative">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">⚡ Intersection Nodes — {selectedCity}</h2>
+                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">Intersection Nodes — {selectedCity}</h2>
                                 <Badge variant="cyan">{nodes.length} Active</Badge>
                             </div>
                             <div className="flex items-center gap-3 text-[0.65rem] text-text-muted">
@@ -431,6 +455,9 @@ export default function DashboardPage() {
                             <NodeDetail node={selectedNode} onClose={() => setSelectedNode(null)} />
                         )}
                     </section>
+
+                    {/* ─── YOLO AI Traffic Density Panel (full-width) ─── */}
+                    <YoloFailsafePanel cityName={selectedCity} />
                 </div>
 
                 {/* RIGHT sidebar */}
@@ -485,21 +512,6 @@ export default function DashboardPage() {
                                 <div key={l} className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
                                     <div className="text-[0.6rem] text-text-muted mb-1">{l}</div>
                                     <div className={`text-base font-bold font-mono ${c}`}>{v}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Camera status */}
-                    <div className="bg-bg-card border border-white/5 rounded-2xl p-5">
-                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">📷 Camera Status</div>
-                        <div className="flex flex-col gap-2.5">
-                            {[['CAM-07', 'N-07 · MG Road', 'Override Active', 'red'], ['CAM-12', 'N-12 · Outer Ring', 'Normal', 'green'], ['CAM-03', 'N-03 · Airport', 'Signal Weak', 'amber']].map(([id, loc, status, color]) => (
-                                <div key={id} className="flex items-center gap-2.5 text-xs">
-                                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${color === 'red' ? 'bg-accent-red' : color === 'green' ? 'bg-accent-green' : 'bg-accent-amber'}`} />
-                                    <span className="font-mono text-[0.62rem] text-text-muted w-12 flex-shrink-0">{id}</span>
-                                    <span className="text-text-secondary flex-1 truncate">{loc}</span>
-                                    <Badge variant={color} className="text-[0.58rem] flex-shrink-0">{status}</Badge>
                                 </div>
                             ))}
                         </div>
