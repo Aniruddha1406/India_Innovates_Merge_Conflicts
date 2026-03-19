@@ -190,14 +190,29 @@ function CameraCard({ cam, density, signal, timer, event, emergency, manualOverr
                 </div>
             </div>
 
-            {/* Camera feed */}
-            <div style={{ height: 58, background: '#050a14', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ position: 'absolute', left: 0, right: 0, height: 1.5, background: 'rgba(0,245,255,0.38)', animation: 'scanline 2.2s linear infinite', boxShadow: '0 0 5px #00f5ff' }} />
-                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(0,245,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.025) 1px,transparent 1px)', backgroundSize: '14px 14px' }} />
-                <div style={{ zIndex: 1, fontSize: '0.52rem', fontFamily: 'monospace', color: isAmbulance ? '#ffb800' : isDense ? '#ff3b5c' : 'rgba(255,255,255,0.16)' }}>
-                    {isAmbulance ? `Class: Ambulance  conf ${event.conf}%` : isDense ? `Dense traffic  ${density}%` : 'SCANNING'}
+            {/* Camera feed — live MJPEG from Python streamer */}
+            <div style={{ height: 90, background: '#050a14', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img
+                    src="http://localhost:8001/video_feed"
+                    alt={`${cam.name} live feed`}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, zIndex: 0 }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                {/* Scanline overlay */}
+                <div style={{ position: 'absolute', left: 0, right: 0, height: 1.5, background: 'rgba(0,245,255,0.38)', animation: 'scanline 2.2s linear infinite', boxShadow: '0 0 5px #00f5ff', zIndex: 2 }} />
+                {/* Grid overlay */}
+                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(0,245,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.025) 1px,transparent 1px)', backgroundSize: '14px 14px', zIndex: 2 }} />
+                {/* Status text overlay */}
+                <div style={{ zIndex: 3, fontSize: '0.52rem', fontFamily: 'monospace', color: isAmbulance ? '#ffb800' : isDense ? '#ff3b5c' : 'rgba(255,255,255,0.5)', textShadow: '0 0 4px rgba(0,0,0,0.8)', fontWeight: 700 }}>
+                    {isAmbulance ? `🚨 Ambulance  conf ${event.conf}%` : isDense ? `Dense traffic  ${density}%` : 'YOLO-v8 · LIVE'}
                 </div>
-                {event && <div style={{ position: 'absolute', top: 7, right: 7, width: isAmbulance ? 28 : 42, height: isAmbulance ? 18 : 12, border: `1px solid ${isAmbulance ? '#ffb800' : '#ff3b5c'}`, borderRadius: 2, boxShadow: `0 0 5px ${isAmbulance ? '#ffb80066' : '#ff3b5c66'}` }} />}
+                {/* Detection bounding box indicator */}
+                {event && <div style={{ position: 'absolute', top: 7, right: 7, width: isAmbulance ? 28 : 42, height: isAmbulance ? 18 : 12, border: `1px solid ${isAmbulance ? '#ffb800' : '#ff3b5c'}`, borderRadius: 2, boxShadow: `0 0 5px ${isAmbulance ? '#ffb80066' : '#ff3b5c66'}`, zIndex: 3 }} />}
+                {/* Live badge */}
+                <div style={{ position: 'absolute', top: 4, left: 5, display: 'flex', alignItems: 'center', gap: 3, zIndex: 3 }}>
+                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#ff3b5c', animation: 'pulse-dot 1.2s infinite' }} />
+                    <span style={{ fontSize: '0.4rem', fontWeight: 800, color: '#ff3b5c', fontFamily: 'monospace', letterSpacing: '0.06em' }}>REC</span>
+                </div>
             </div>
 
             {/* Density bar */}

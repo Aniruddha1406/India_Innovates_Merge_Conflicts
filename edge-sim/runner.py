@@ -43,7 +43,7 @@ EMERGENCY_CLASSES = {"ambulance", "truck", "bus"}  # truck/bus as fallback if cu
 # ---------------------------------------------------------------------------
 # Main detection loop
 # ---------------------------------------------------------------------------
-def run(video_path: str, use_webcam: bool, use_firebase: bool):
+def run(video_path: str, use_webcam: bool, use_firebase: bool, headless: bool = False):
     print("\n  SignalSync Edge AI Simulator  ")
     print("=" * 40)
 
@@ -134,13 +134,18 @@ def run(video_path: str, use_webcam: bool, use_firebase: bool):
         cv2.putText(frame, f"{node['id']} {node['name']}  |  {status_text}", (8, 19),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.52, status_color, 1)
 
-        # Show frame (close window to stop)
-        cv2.imshow(f"SignalSync Edge AI — {node['id']} {node['name']}", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        # Show frame only if NOT headless
+        if not headless:
+            cv2.imshow(f"SignalSync Edge AI — {node['id']} {node['name']}", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            # Small delay to avoid maxing out CPU in headless mode
+            cv2.waitKey(1)
 
     cap.release()
-    cv2.destroyAllWindows()
+    if not headless:
+        cv2.destroyAllWindows()
     print("[Edge AI] Session ended.")
 
 
@@ -149,10 +154,12 @@ if __name__ == "__main__":
     parser.add_argument("--video",       default="demo.mp4",  help="Path to demo video file")
     parser.add_argument("--webcam",      action="store_true", help="Use live webcam instead of video")
     parser.add_argument("--no-firebase", action="store_true", help="Run without Firebase (offline test)")
+    parser.add_argument("--headless",    action="store_true", help="No GUI window (video shown in browser dashboard instead)")
     args = parser.parse_args()
 
     run(
         video_path   = args.video,
         use_webcam   = args.webcam,
         use_firebase = not args.no_firebase,
+        headless     = args.headless,
     )
