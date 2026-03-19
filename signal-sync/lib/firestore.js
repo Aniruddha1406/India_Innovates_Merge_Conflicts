@@ -1,5 +1,5 @@
 import {
-    collection, addDoc, updateDoc, doc, onSnapshot,
+    collection, addDoc, updateDoc, doc, onSnapshot, setDoc,
     query, where, serverTimestamp, getDoc, getDocs,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -60,17 +60,21 @@ export function subscribeAllUsers(callback) {
 }
 
 export async function setUserRole(uid, role) {
-    await updateDoc(doc(db, 'users', uid), { role });
+    await setDoc(doc(db, 'users', uid), { role }, { merge: true });
+}
+
+export async function setUserVerification(uid, verified) {
+    await setDoc(doc(db, 'users', uid), { verified }, { merge: true });
 }
 
 // ─── Signals ─────────────────────────────────────────────────────────────────
 
 export async function setSignalStatus(intersectionId, status, adminUid) {
-    await updateDoc(doc(db, 'signals', intersectionId), {
+    await setDoc(doc(db, 'signals', intersectionId), {
         status,
         overriddenBy: adminUid,
         updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
 }
 
 export function subscribeSignals(callback) {

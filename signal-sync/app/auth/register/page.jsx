@@ -26,6 +26,7 @@ export default function RegisterPage() {
                 vehicleNumber: form.vehicleNumber.trim().toUpperCase(),
                 vehicleType: form.type,
                 role: 'user',
+                verified: false,
                 createdAt: serverTimestamp(),
             });
             router.push('/portal');

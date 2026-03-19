@@ -441,8 +441,9 @@ export default function PortalPage() {
                                         </div>
                                     </div>
 
-                                    {/* Corridor creation — auth required */}
+                                    {/* Corridor creation — auth + verification required */}
                                     {user ? (
+                                        (isAdmin || userProfile?.verified) ? (
                                         <>
                                             <div className="flex gap-2">
                                                 {[['ambulance', 'Ambulance'], ['fire', 'Fire Truck'], ['vvip', 'VVIP']].map(([v, l]) => (
@@ -499,6 +500,21 @@ export default function PortalPage() {
                                                 </div>
                                             )}
                                         </>
+                                        ) : (
+                                            /* ── Unverified user banner ── */
+                                            <div className="bg-accent-amber/[0.06] border border-accent-amber/30 rounded-xl p-5 text-center">
+                                                <div className="text-2xl mb-2">🔒</div>
+                                                <div className="text-sm font-bold text-accent-amber mb-1">Account Pending Verification</div>
+                                                <p className="text-text-muted text-xs leading-relaxed mb-3">
+                                                    Your account must be verified by an administrator before you can create green corridors.
+                                                    A verification request has been sent automatically.
+                                                </p>
+                                                <div className="inline-flex items-center gap-2 bg-accent-amber/10 border border-accent-amber/25 rounded-full px-3 py-1.5">
+                                                    <span className="w-2 h-2 rounded-full bg-accent-amber animate-pulse" />
+                                                    <span className="text-[0.65rem] font-bold text-accent-amber uppercase tracking-wider">Awaiting Admin Approval</span>
+                                                </div>
+                                            </div>
+                                        )
                                     ) : (
                                         <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 text-center">
                                             <div className="text-sm font-semibold mb-1">Want a Green Corridor?</div>

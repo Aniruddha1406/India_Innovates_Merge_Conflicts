@@ -7,7 +7,7 @@ import StatusDot from '@/components/StatusDot';
 import { useAuth } from '@/components/AuthProvider';
 import {
     subscribeAllCorridors, terminateCorridor, createCorridor,
-    subscribeAllUsers, setUserRole, subscribeSignals, setSignalStatus,
+    subscribeAllUsers, setUserRole, setUserVerification, subscribeSignals, setSignalStatus,
 } from '@/lib/firestore';
 
 const SIGNAL_NODES = [
@@ -60,6 +60,10 @@ export default function AdminPage() {
 
     async function handleRoleToggle(uid, currentRole) {
         await setUserRole(uid, currentRole === 'admin' ? 'user' : 'admin');
+    }
+
+    async function handleVerifyToggle(uid, currentVerified) {
+        await setUserVerification(uid, !currentVerified);
     }
 
     async function handleCreateCorridor(e) {
@@ -118,7 +122,7 @@ export default function AdminPage() {
                         ['Active Corridors', active.length, 'text-accent-green'],
                         ['Total Corridors', corridors.length, 'text-accent-cyan'],
                         ['Registered Users', users.length, 'text-accent-violet'],
-                        ['Signal Overrides', Object.values(signals).filter(s => s.overriddenBy).length, 'text-accent-amber'],
+                        ['Pending Verification', users.filter(u => !u.verified && u.role !== 'admin').length, 'text-accent-amber'],
                     ].map(([l, v, c]) => (
                         <div key={l} className="bg-bg-card border border-white/5 rounded-xl p-4 text-center">
                             <div className="text-[0.65rem] text-text-muted uppercase tracking-widest mb-1">{l}</div>
@@ -256,13 +260,25 @@ export default function AdminPage() {
                         <h2 className="font-bold text-sm uppercase tracking-widest text-text-muted mb-4">Registered Users ({users.length})</h2>
                         <div className="flex flex-col gap-2">
                             {users.map(u => (
-                                <div key={u.id} className="bg-bg-card border border-white/5 rounded-xl px-5 py-3.5 flex items-center gap-4">
+                                <div key={u.id} className={`border rounded-xl px-5 py-3.5 flex items-center gap-4 ${!u.verified && u.role !== 'admin' ? 'bg-accent-amber/[0.04] border-accent-amber/20' : 'bg-bg-card border-white/5'}`}>
                                     <div className="flex-1">
                                         <div className="font-semibold text-sm">{u.name || '—'}</div>
                                         <div className="text-xs text-text-muted">{u.email}</div>
                                     </div>
                                     {u.vehicleNumber && <span className="font-mono text-xs text-text-secondary bg-white/5 px-2 py-0.5 rounded">{u.vehicleNumber}</span>}
-                                    <Badge variant={u.role === 'admin' ? 'red' : 'violet'}>{u.role || 'user'}</Badge>
+                                    {u.role === 'admin' ? (
+                                        <Badge variant="red">admin</Badge>
+                                    ) : u.verified ? (
+                                        <Badge variant="green">verified</Badge>
+                                    ) : (
+                                        <Badge variant="amber">pending</Badge>
+                                    )}
+                                    {u.id !== user.uid && u.role !== 'admin' && (
+                                        <button onClick={() => handleVerifyToggle(u.id, u.verified)}
+                                            className={`text-[0.65rem] font-bold px-2.5 py-1 rounded-lg border font-sans cursor-pointer ${u.verified ? 'bg-accent-red/10 text-accent-red border-accent-red/30' : 'bg-accent-green/10 text-accent-green border-accent-green/30'}`}>
+                                            {u.verified ? 'Revoke' : 'Verify'}
+                                        </button>
+                                    )}
                                     {u.id !== user.uid && (
                                         <button onClick={() => handleRoleToggle(u.id, u.role)}
                                             className={`text-[0.65rem] font-bold px-2.5 py-1 rounded-lg border font-sans cursor-pointer ${u.role === 'admin' ? 'bg-accent-red/10 text-accent-red border-accent-red/30' : 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30'}`}>
