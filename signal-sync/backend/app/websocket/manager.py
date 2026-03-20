@@ -46,7 +46,7 @@ class ConnectionManager:
                 await ws.send_text(json.dumps(payload))
             except Exception:
                 dead.add(ws)
-        self._room(room) -= dead
+        self._room(room).difference_update(dead)
         # Also send to _all
         await self.broadcast_all(payload)
 
@@ -58,7 +58,7 @@ class ConnectionManager:
                 await ws.send_text(json.dumps(payload))
             except Exception:
                 dead.add(ws)
-        self._room(room) -= dead
+        self._room(room).difference_update(dead)
         await self.broadcast_all(payload)
 
     async def broadcast_all(self, payload: dict) -> None:
@@ -69,7 +69,7 @@ class ConnectionManager:
                 await ws.send_text(json.dumps(payload))
             except Exception:
                 dead.add(ws)
-        self._room(room) -= dead
+        self._room(room).difference_update(dead)
 
 
 # Module-level singleton

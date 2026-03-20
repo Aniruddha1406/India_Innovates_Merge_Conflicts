@@ -14,8 +14,7 @@ Write-Host "  ==============================================" -ForegroundColor C
 Write-Host ""
 
 Write-Host "Starting Next.js on http://localhost:3000 ..." -ForegroundColor Yellow
-Write-Host "(Press Ctrl+C in this window to stop the frontend)" -ForegroundColor DarkGray
+Write-Host "(Close the new black command window to stop the frontend)" -ForegroundColor DarkGray
 Write-Host ""
 
-Set-Location $frontendDir
-npm run dev
+Start-Process "cmd.exe" -ArgumentList "/k cd /d `"$frontendDir`" && npm run dev" -WindowStyle Normal

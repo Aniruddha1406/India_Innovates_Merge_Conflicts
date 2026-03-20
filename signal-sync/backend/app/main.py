@@ -4,8 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import structlog
 
 from app.config import settings
-from app.database import engine
-from app.models import Base  # ensure all models imported
+from app.database import engine, Base
+import app.models  # ensure all models imported
 from app.redis_client import init_redis, close_redis
 from app.middleware.auth import init_firebase
 from app.services.routing_engine import build_graph

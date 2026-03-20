@@ -17,12 +17,16 @@ _firebase_app: Optional[firebase_admin.App] = None
 
 def init_firebase() -> None:
     global _firebase_app
+    path = settings.firebase_service_account_path
+    if not path:
+        log.warning("Firebase service account path not set — skipping Firebase init (auth endpoints will be unavailable)")
+        return
     try:
-        cred = credentials.Certificate(settings.firebase_service_account_path)
+        cred = credentials.Certificate(path)
         _firebase_app = firebase_admin.initialize_app(cred)
         log.info("Firebase Admin SDK initialised")
     except Exception as e:
-        log.error("Firebase init failed", error=str(e))
+        log.warning("Firebase init failed — auth endpoints will be unavailable", error=str(e))
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
