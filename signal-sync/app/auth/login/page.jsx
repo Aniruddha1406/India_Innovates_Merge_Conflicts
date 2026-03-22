@@ -54,7 +54,7 @@ export default function LoginPage() {
         setError('');
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:8000/api/v1/auth/login/aadhaar/request-otp', {
+            const res = await fetch('http://localhost:8080/api/v1/auth/login/aadhaar/request-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ aadhaar_number: documentNumber })
@@ -73,7 +73,7 @@ export default function LoginPage() {
         setError('');
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:8000/api/v1/auth/login/aadhaar/verify', {
+            const res = await fetch('http://localhost:8080/api/v1/auth/login/aadhaar/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ aadhaar_number: documentNumber, otp, role })
@@ -95,7 +95,7 @@ export default function LoginPage() {
         setError('');
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:8000/api/v1/auth/login/dl/upload', {
+            const res = await fetch('http://localhost:8080/api/v1/auth/login/dl/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ dl_number: documentNumber, role })
