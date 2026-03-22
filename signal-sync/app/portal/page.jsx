@@ -419,8 +419,8 @@ export default function PortalPage() {
             {/* ── Nav ── */}
             <nav className="relative z-10 flex items-center justify-between px-10 py-3.5 bg-bg-deep/95 border-b border-white/5 backdrop-blur-xl">
                 <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl no-underline text-white">
-                    <div className="w-8 h-8 rounded-[6px] bg-[#1e3a5f] border border-sky-500/30 flex items-center justify-center text-sky-400">⬡</div>
-                    <span><span className="text-sky-400">Signal</span>Sync</span>
+                    <div className="w-8 h-8 rounded-[6px] bg-[#0c3547] border border-cyan-500/30 flex items-center justify-center text-cyan-400">⬡</div>
+                    <span><span className="text-cyan-400">Signal</span>Sync</span>
                 </Link>
                 <div className="flex items-center gap-2.5">
                     {user ? (
@@ -518,7 +518,7 @@ export default function PortalPage() {
                                 ) : <div className="flex flex-col gap-1.5"><label className="text-[0.78rem] font-semibold text-text-secondary uppercase tracking-wide">{t('destination')}</label><input disabled className="input-field opacity-50" placeholder="Loading Google Maps..." /></div>}
 
                                 <button onClick={calcRoute} disabled={calculating || !canCalc}
-                                    className="w-full py-3 rounded-xl font-bold bg-sky-500 hover:bg-sky-400 text-white disabled:opacity-50 transition-all font-sans cursor-pointer">
+                                    className="w-full py-3 rounded-xl font-bold bg-cyan-500 hover:bg-cyan-400 text-white disabled:opacity-50 transition-all font-sans cursor-pointer">
                                     {calculating ? t('routing') : t('getBestRoute')}
                                 </button>
                             </div>
@@ -649,7 +649,7 @@ export default function PortalPage() {
                                                         {/* Navigation starts here — physically travelling */}
                                                         {!navigationMode ? (
                                                             <button onClick={startNavigation}
-                                                                className="w-full py-3 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all font-sans cursor-pointer flex items-center justify-center gap-2">
+                                                                className="w-full py-3 rounded-xl font-bold bg-cyan-600 hover:bg-cyan-500 text-white transition-all font-sans cursor-pointer flex items-center justify-center gap-2">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
                                                                 {t('startGPS')}
                                                             </button>

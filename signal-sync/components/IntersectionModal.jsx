@@ -100,7 +100,7 @@ export default function IntersectionModal({ cam, camState, onClose }) {
     const CLASS_COLORS = {
         car: '#00f5ff', truck: '#ff3b5c', bus: '#ffb800',
         motorcycle: '#a78bfa', bicycle: '#00ff9d', person: '#f97316',
-        van: '#38bdf8', ambulance: '#ff0060',
+        van: '#22d3ee', ambulance: '#ff0060',
     };
 
     return (
