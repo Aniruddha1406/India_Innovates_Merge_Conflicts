@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -40,7 +40,7 @@ export default function RegisterPage() {
             // 1. Create Firebase user
             const cred = await createUserWithEmailAndPassword(auth, form.email, form.password);
 
-            // 2. Save to Firestore (non-blocking — redirect immediately after)
+            // 2. Save to Firestore (non-blocking  redirect immediately after)
             const profileData = {
                 name: form.name,
                 email: form.email,
@@ -53,7 +53,7 @@ export default function RegisterPage() {
                 createdAt: new Date().toISOString(),
             };
 
-            // Don't await — write in background so redirect is instant
+            // Don't await  write in background so redirect is instant
             setDoc(doc(db, 'users', cred.user.uid), profileData).catch(err =>
                 console.error('Firestore write error:', err)
             );
@@ -95,7 +95,7 @@ export default function RegisterPage() {
             <div className="relative z-10 w-full max-w-md mx-4 bg-[rgba(13,17,23,0.92)] backdrop-blur-xl border border-cyan-500/20 rounded-[32px] p-10 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
                 <div className="flex flex-col items-center mb-7">
                     <Link href="/" className="flex items-center gap-2.5 font-extrabold text-2xl mb-3 no-underline text-white">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(34,211,238,0.25)]">⬡</div>
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(34,211,238,0.25)]"></div>
                         <span><span className="text-cyan-400">Signal</span>Sync</span>
                     </Link>
                     <h2 className="text-xl font-bold mt-1">{t('registerTitle')}</h2>
@@ -119,7 +119,7 @@ export default function RegisterPage() {
 
                     {/* Vehicle section */}
                     <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 flex flex-col gap-3">
-                        <div className="text-[0.75rem] font-bold text-text-muted uppercase tracking-wide mb-1">🚗 {t('vehicleNumber')}</div>
+                        <div className="text-[0.75rem] font-bold text-text-muted uppercase tracking-wide mb-1"> {t('vehicleNumber')}</div>
                         <div className="flex gap-2">
                             {[['ambulance', t('ambulanceLabel')], ['fire', t('fireTruckLabel')], ['vvip', t('vvipLabel')]].map(([v, l]) => (
                                 <button key={v} type="button" onClick={() => set('type', v)}
@@ -136,13 +136,13 @@ export default function RegisterPage() {
 
                     {/* Aadhaar section */}
                     <div className="bg-white/[0.02] border border-cyan-600/20 rounded-xl p-4 flex flex-col gap-2">
-                        <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide">🪪 Aadhaar Number <span className="text-accent-red">*</span></div>
+                        <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide"> Aadhaar Number <span className="text-accent-red">*</span></div>
                         <input required className="input-field font-mono" value={form.aadhaarNumber} onChange={e => set('aadhaarNumber', e.target.value)} placeholder="1234 5678 9012" maxLength={14} />
                     </div>
 
                     {/* Driving License section */}
                     <div className="bg-white/[0.02] border border-cyan-600/20 rounded-xl p-4 flex flex-col gap-2">
-                        <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide">🚘 Driving License <span className="text-accent-red">*</span></div>
+                        <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide"> Driving License <span className="text-accent-red">*</span></div>
                         <input required className="input-field font-mono" value={form.dlNumber} onChange={e => set('dlNumber', e.target.value)} placeholder="DL-0420110012345" />
                     </div>
 

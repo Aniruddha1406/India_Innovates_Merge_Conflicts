@@ -12,7 +12,7 @@ const DelhiMap = dynamic(() => import('@/components/DelhiMap'), {
     ssr: false,
     loading: () => (
         <div style={{ height: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050c18', borderRadius: '12px', color: '#00f5ff' }}>
-            Loading map…
+            Loading map
         </div>
     )
 });
@@ -76,17 +76,17 @@ export default function RoutesPage() {
             <div className="grid-bg" />
             <nav className="relative z-10 flex items-center justify-between px-8 py-3.5 bg-bg-deep/95 border-b border-white/5 backdrop-blur-xl">
                 <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl no-underline text-white">
-                    <div className="w-8 h-8 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan">⬡</div>
+                    <div className="w-8 h-8 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan"></div>
                     <span><span className="text-accent-cyan">Signal</span>Sync</span>
                 </Link>
                 <div className="flex items-center gap-2.5">
                     <Badge variant="cyan"><StatusDot color="cyan" className="mr-1" />{t('liveTraffic') || 'Live Traffic'}</Badge>
-                    <span className="text-text-muted text-xs">{t('routeFinderLink')} — {t('noAccountRequired')}</span>
+                    <span className="text-text-muted text-xs">{t('routeFinderLink')}  {t('noAccountRequired')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <Link href="/dashboard" className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">{t('dashboardLink')}</Link>
                     <Link href="/portal" className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan no-underline">{t('portalLink')}</Link>
-                    <Link href="/" className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">← {t('homeLink')}</Link>
+                    <Link href="/" className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline"> {t('homeLink')}</Link>
                 </div>
             </nav>
 
@@ -97,7 +97,7 @@ export default function RoutesPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
-                    {/* LEFT – Input panel */}
+                    {/* LEFT  Input panel */}
                     <div className="bg-bg-card border border-white/5 rounded-xl p-6 flex flex-col gap-4 h-fit">
                         <h2 className="text-base font-bold">{t('findRoute') || 'Find Best Route'}</h2>
 
@@ -119,7 +119,7 @@ export default function RoutesPage() {
                         <div className="flex items-center gap-2.5">
                             <div className="flex-1 h-px bg-white/10" />
                             <button onClick={() => { const ol = originLatLng, on = originName; setOriginLatLng(destLatLng); setDestLatLng(ol); setOriginName(destName); setDestName(on); reset(); }}
-                                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-text-secondary font-sans cursor-pointer">⇅</button>
+                                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-text-secondary font-sans cursor-pointer"></button>
                             <div className="flex-1 h-px bg-white/10" />
                         </div>
 
@@ -159,18 +159,18 @@ export default function RoutesPage() {
                                     </div>
                                 </div>
                                 <div className="text-center">
-                                    <Link href="/portal" className="text-xs text-accent-cyan no-underline hover:underline">Need priority? Create a Green Corridor →</Link>
+                                    <Link href="/portal" className="text-xs text-accent-cyan no-underline hover:underline">Need priority? Create a Green Corridor {'->'} </Link>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* RIGHT – Map */}
+                    {/* RIGHT  Map */}
                     <div className="bg-bg-card border border-white/5 rounded-xl p-5">
                         <div className="flex justify-between items-center mb-3">
                             <div>
                                 <h3 className="text-base font-bold">{t('trafficMapTitle', city) || `${city} ${t('trafficMapTitle') || 'Traffic Map'}`}</h3>
-                                <p className="text-text-secondary text-xs">{showRoute && originName ? `${originName} → ${destName}` : t('selectOriginDest')}</p>
+                                <p className="text-text-secondary text-xs">{showRoute && originName ? `${originName} -> ${destName}` : t('selectOriginDest')}</p>
                             </div>
                             <Badge variant="cyan"><StatusDot color="cyan" className="mr-1" />Live</Badge>
                         </div>

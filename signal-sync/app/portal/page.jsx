@@ -16,7 +16,7 @@ const DelhiMap = dynamic(() => import('@/components/DelhiMap'), {
     ssr: false,
     loading: () => (
         <div style={{ height: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050c18', borderRadius: '12px', color: '#00f5ff', fontSize: '0.9rem' }}>
-            Loading map…
+            Loading map
         </div>
     )
 });
@@ -54,7 +54,7 @@ function PlaceInput({ label, placeholder, onPlaceSelect, cityBounds, keyId }) {
     );
 }
 
-// ── Derive node status string from activeNodeIdx ──────────────────────────────
+// -- Derive node status string from activeNodeIdx ------------------------------
 function getNodeStatus(nodeIdx, activeIdx) {
     if (nodeIdx < activeIdx) return 'done';
     if (nodeIdx === activeIdx) return 'active';
@@ -97,15 +97,15 @@ export default function PortalPage() {
     const [vvipLevel, setVvipLevel] = useState('Minister');
     const [timeSensitivity, setTimeSensitivity] = useState('Standard');
 
-    // ── Corridor node state ──────────────────────────────────────────────────
+    // -- Corridor node state --------------------------------------------------
     const [corridorNodes, setCorridorNodes] = useState([]);
     const [activeNodeIdx, setActiveNodeIdx] = useState(0);
     const [activeCdId, setActiveCdId] = useState(null);
 
-    // ── IoT preemption visual state ──────────────────────────────────────────
+    // -- IoT preemption visual state ------------------------------------------
     const [iotPreemption, setIotPreemption] = useState(null); // { nodeName, distance }
 
-    // ── GPS / Navigation state ───────────────────────────────────────────────
+    // -- GPS / Navigation state -----------------------------------------------
     const [userLocation, setUserLocation] = useState(null);
     const [navigationMode, setNavigationMode] = useState(false);
     const [gpsError, setGpsError] = useState('');
@@ -125,7 +125,7 @@ export default function PortalPage() {
         return () => clearInterval(t);
     }, [corridorActive]);
 
-    // ── Auto-advance node timer (Fallback for when GPS is stationary) ────────
+    // -- Auto-advance node timer (Fallback for when GPS is stationary) --------
     useEffect(() => {
         if (!corridorActive || corridorNodes.length === 0) return;
         
@@ -136,12 +136,12 @@ export default function PortalPage() {
             if (nextIdx < corridorNodes.length) {
                 const nextNode = corridorNodes[nextIdx];
                 if (nextNode?.id) {
-                    console.log(`⏱️ AUTO-ADVANCE: Turning ${nextNode.name} green via timer wave`);
+                    console.log(` AUTO-ADVANCE: Turning ${nextNode.name} green via timer wave`);
                     setSignalStatus(nextNode.id, 'green', 'AUTO-TIMER');
                 }
                 const prevNode = corridorNodes[activeNodeIdx];
                 if (prevNode?.id) {
-                    console.log(`⏱️ AUTO-ADVANCE: Releasing ${prevNode.name}`);
+                    console.log(` AUTO-ADVANCE: Releasing ${prevNode.name}`);
                     setSignalStatus(prevNode.id, 'auto', null);
                 }
                 setActiveNodeIdx(nextIdx);
@@ -164,7 +164,7 @@ export default function PortalPage() {
     }, []);
 
     // Receives matched city signal nodes from DelhiMap (nodesOnPolyline result).
-    // Guard: do NOT overwrite nodes if corridor is already active — that
+    // Guard: do NOT overwrite nodes if corridor is already active  that
     // would reset activeNodeIdx and break live navigation.
     const handleRouteNodes = useCallback((nodes) => {
         if (corridorActive) return;  // never overwrite during live corridor
@@ -174,7 +174,7 @@ export default function PortalPage() {
         }
     }, [corridorActive]);
 
-    // ── Use My Location ───────────────────────────────────────────────────────
+    // -- Use My Location -------------------------------------------------------
     function useMyLocation() {
         if (!navigator.geolocation) {
             setGpsError('Geolocation is not supported by your browser.');
@@ -187,7 +187,7 @@ export default function PortalPage() {
                 const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 setUserLocation(loc);
                 setOriginLatLng(loc);
-                setOriginName('📍 My Current Location');
+                setOriginName(' My Current Location');
                 setShowCorridor(false);
                 setCorridorActive(false);
                 setRouteInfo(null);
@@ -202,7 +202,7 @@ export default function PortalPage() {
         );
     }
 
-    // ── Start In-App Navigation ───────────────────────────────────────────────
+    // -- Start In-App Navigation -----------------------------------------------
     function startNavigation() {
         if (!navigator.geolocation) {
             setGpsError('Geolocation not supported.');
@@ -231,7 +231,7 @@ export default function PortalPage() {
         setNavigationMode(false);
     }
 
-    // ── Callback fired by DelhiMap as ambulance crosses each node ──────────────
+    // -- Callback fired by DelhiMap as ambulance crosses each node --------------
     const handleNodeAdvance = useCallback(async (nodeIdx) => {
         setActiveNodeIdx(nodeIdx);
 
@@ -250,10 +250,10 @@ export default function PortalPage() {
         } catch { }
     }, [corridorNodes]);
 
-    // ── Callback fired when ambulance enters 500m geofence ────────────────────
+    // -- Callback fired when ambulance enters 500m geofence --------------------
     const handleIotTrigger = useCallback((node, distance) => {
         if (!node.id) return;
-        console.log(`⚡ IOT PREEMPTION: ${node.name} (${node.id}) — ambulance ${distance}m away`);
+        console.log(` IOT PREEMPTION: ${node.name} (${node.id})  ambulance ${distance}m away`);
         // Show visual indicator on portal
         setIotPreemption({ nodeName: node.name, distance });
         // Auto-clear the indicator after 8 seconds
@@ -262,7 +262,7 @@ export default function PortalPage() {
         // Encode the distance into the overriddenBy string for the dashboard to parse.
         // We do NOT await this, and we silently catch network timeouts.
         setSignalStatus(node.id, 'green', `IOT-AUTO:${distance}`)
-            .then(() => console.log(`  ✓ Firestore signal overridden: ${node.id} → GREEN`))
+            .then(() => console.log(`   Firestore signal overridden: ${node.id} -> GREEN`))
             .catch(e => {
                 // Ignore "Could not reach Cloud Firestore backend" offline errors that happen if websocket drops
                 if (!e.message?.includes('Cloud Firestore backend')) {
@@ -271,7 +271,7 @@ export default function PortalPage() {
             });
     }, []);
 
-    // ── Auto-terminate when ambulance reaches destination ──────────────────────
+    // -- Auto-terminate when ambulance reaches destination ----------------------
     const handleArrival = useCallback(async () => {
         setActiveNodeIdx(prev => prev + 100);
         setTimeout(async () => {
@@ -330,9 +330,9 @@ export default function PortalPage() {
         setDupError('');
         setCreating(true);
 
-        // ── Compute corridor nodes from route polyline or straight-line fallback ──
+        // -- Compute corridor nodes from route polyline or straight-line fallback --
         // routePolyline is set by DelhiMap via onRouteNodes as soon as the route loads.
-        // We use ALL nodes found within 350m of the actual route — no hardcoded count.
+        // We use ALL nodes found within 350m of the actual route  no hardcoded count.
         const nodes = corridorNodes.length > 0
             ? corridorNodes
             : nodesOnPolyline(
@@ -344,7 +344,7 @@ export default function PortalPage() {
         if (corridorNodes.length === 0) setCorridorNodes(nodes);
         setActiveNodeIdx(0);
 
-        // ── Timeout-protected Firestore creation ──────────────────────────────
+        // -- Timeout-protected Firestore creation ------------------------------
         const creationTimeout = setTimeout(() => {
             if (!corridorActive) {
                 setCreating(false);
@@ -439,7 +439,7 @@ export default function PortalPage() {
         await terminateCorridor(corridorId);
     }
 
-    // ── Compute signal markers for map ─────────────────────────────────────────
+    // -- Compute signal markers for map -----------------------------------------
     const corridorNodeMarkers = corridorNodes
         .filter(n => n.pos)
         .map((n, i) => ({
@@ -453,16 +453,16 @@ export default function PortalPage() {
     const cityCorridors = activeCds.filter(c => c.city === city);
     const canCalc = !!originLatLng && !!destLatLng;
     const cityBounds = CITIES.find(c => c.name === city)?.bounds;
-    const etaStr = etaSec > 0 ? `${Math.floor(etaSec / 60)}m ${(etaSec % 60).toString().padStart(2, '0')}s` : routeInfo?.durationText || '—';
+    const etaStr = etaSec > 0 ? `${Math.floor(etaSec / 60)}m ${(etaSec % 60).toString().padStart(2, '0')}s` : routeInfo?.durationText || '';
 
     return (
         <div className="min-h-screen bg-bg-deep font-sans relative">
             <div className="grid-bg" />
 
-            {/* ── Nav ── */}
+            {/* -- Nav -- */}
             <nav className="relative z-10 flex items-center justify-between px-10 py-3.5 bg-bg-deep/95 border-b border-white/5 backdrop-blur-xl">
                 <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl no-underline text-white">
-                    <div className="w-8 h-8 rounded-[6px] bg-[#0c3547] border border-cyan-500/30 flex items-center justify-center text-cyan-400">⬡</div>
+                    <div className="w-8 h-8 rounded-[6px] bg-[#0c3547] border border-cyan-500/30 flex items-center justify-center text-cyan-400"></div>
                     <span><span className="text-cyan-400">Signal</span>Sync</span>
                 </Link>
                 <div className="flex items-center gap-2.5">
@@ -488,7 +488,7 @@ export default function PortalPage() {
 
             <div className="relative z-10 max-w-[1400px] mx-auto px-10 py-8">
 
-                {/* ── City Selector ── */}
+                {/* -- City Selector -- */}
                 <div className="flex items-center gap-4 mb-6">
                     <div className="flex items-center gap-3 flex-1">
                         <span className="text-text-muted text-sm font-semibold uppercase tracking-wide whitespace-nowrap">{t('selectCity')}:</span>
@@ -509,7 +509,7 @@ export default function PortalPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-[480px_1fr] gap-6">
 
-                    {/* ── LEFT COLUMN ── */}
+                    {/* -- LEFT COLUMN -- */}
                     <div className="flex flex-col gap-5">
 
                         {/* Route Finder */}
@@ -529,17 +529,17 @@ export default function PortalPage() {
                                             </div>
                                         ) : <input disabled className="input-field flex-1 opacity-50" placeholder="Loading Google Maps..." />}
 
-                                        {/* 📍 One-tap GPS origin button */}
+                                        {/*  One-tap GPS origin button */}
                                         <button
                                             onClick={useMyLocation}
                                             disabled={gpsLoading}
                                             title="Set origin to my current GPS location"
                                             className="flex-shrink-0 w-11 h-11 rounded-xl bg-[#4285F4]/15 border border-[#4285F4]/40 text-[#4285F4] hover:bg-[#4285F4]/30 transition-all font-sans cursor-pointer flex items-center justify-center text-base disabled:opacity-50"
                                         >
-                                            {gpsLoading ? '⏳' : '📍'}
+                                            {gpsLoading ? '' : ''}
                                         </button>
                                     </div>
-                                    {originName === '📍 My Current Location' && (
+                                    {originName === ' My Current Location' && (
                                         <div className="text-[0.7rem] text-[#4285F4] font-semibold flex items-center gap-1">
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#4285F4] animate-pulse inline-block" />
                                             {t('usingGPSOrigin')}
@@ -551,7 +551,7 @@ export default function PortalPage() {
                                 <div className="flex items-center gap-2.5">
                                     <div className="flex-1 h-px bg-white/10" />
                                     <button onClick={() => { const ol = originLatLng, on = originName; setOriginLatLng(destLatLng); setDestLatLng(ol); setOriginName(destName); setDestName(on); resetRoute(); }}
-                                        className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 text-text-secondary font-sans cursor-pointer">⇅</button>
+                                        className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 text-text-secondary font-sans cursor-pointer"></button>
                                     <div className="flex-1 h-px bg-white/10" />
                                 </div>
 
@@ -577,7 +577,7 @@ export default function PortalPage() {
                                         </div>
                                     </div>
 
-                                    {/* Corridor creation — auth + verification required */}
+                                    {/* Corridor creation  auth + verification required */}
                                     {user ? (
                                         (isAdmin || userProfile?.verified) ? (
                                             <>
@@ -676,7 +676,7 @@ export default function PortalPage() {
                                                         {routeInfo && (
                                                             <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 text-center">
                                                                 <div className="text-base font-extrabold text-emerald-400 mb-0.5">
-                                                                    ⚡ {t('savingMinutes', Math.round((routeInfo.durationSec || 0) * 0.4 / 60))}
+                                                                     {t('savingMinutes', Math.round((routeInfo.durationSec || 0) * 0.4 / 60))}
                                                                 </div>
                                                                 <div className="text-xs text-text-muted">{t('priorityCleared')}</div>
                                                             </div>
@@ -684,7 +684,7 @@ export default function PortalPage() {
                                                         {corridorNodes.length > 0 && (
                                                             <CorridorStatusBox nodes={corridorNodes} activeIdx={activeNodeIdx} eta={etaStr} stops={0} />
                                                         )}
-                                                        {/* Navigation starts here — physically travelling */}
+                                                        {/* Navigation starts here  physically travelling */}
                                                         {!navigationMode ? (
                                                             <button onClick={startNavigation}
                                                                 className="w-full py-3 rounded-xl font-bold bg-cyan-600 hover:bg-cyan-500 text-white transition-all font-sans cursor-pointer flex items-center justify-center gap-2">
@@ -705,9 +705,9 @@ export default function PortalPage() {
                                                 )}
                                             </>
                                         ) : (
-                                            /* ── Unverified user banner ── */
+                                            /* -- Unverified user banner -- */
                                             <div className="bg-accent-amber/[0.06] border border-accent-amber/30 rounded-xl p-5 text-center">
-                                                <div className="text-2xl mb-2">🔒</div>
+                                                <div className="text-2xl mb-2"></div>
                                                 <div className="text-sm font-bold text-accent-amber mb-1">{t('pendingVerification')}</div>
                                                 <p className="text-text-muted text-xs leading-relaxed mb-3">
                                                     {t('pendingDesc')}
@@ -733,7 +733,7 @@ export default function PortalPage() {
                         </div>
                     </div>
 
-                    {/* ── RIGHT COLUMN ── */}
+                    {/* -- RIGHT COLUMN -- */}
                     <div className="flex flex-col gap-5">
 
                         {/* Map with GPS + signal overlays */}
@@ -743,7 +743,7 @@ export default function PortalPage() {
                                     <h3 className="text-base font-bold">{t('trafficMapTitle', city) || `${city} Traffic Map`}</h3>
                                     <p className="text-text-secondary text-xs">
                                         {navigationMode ? t('liveNavActive') :
-                                            showCorridor && originName && destName ? `${originName} → ${destName}` :
+                                            showCorridor && originName && destName ? `${originName} -> ${destName}` :
                                                 t('selectOriginDest')}
                                     </p>
                                 </div>
@@ -772,10 +772,10 @@ export default function PortalPage() {
                             />
                         </div>
 
-                        {/* Active corridors — THIS CITY ONLY */}
+                        {/* Active corridors  THIS CITY ONLY */}
                         <div className="bg-bg-card border border-white/5 rounded-xl p-5">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-base font-bold">{t('activeCorridors', city) || `${t('activeCorridorsHdr')} — ${city}`}</h3>
+                                <h3 className="text-base font-bold">{t('activeCorridors', city) || `${t('activeCorridorsHdr')}  ${city}`}</h3>
                                 <Badge variant="green">
                                     <span className="w-1.5 h-1.5 rounded-full bg-accent-green inline-block mr-1.5 animate-pulse" />
                                     {cityCorridors.length} {t('activeCors')}
@@ -784,7 +784,7 @@ export default function PortalPage() {
 
                             {cityCorridors.length === 0 ? (
                                 <div className="text-center py-6 border border-white/5 border-dashed rounded-xl">
-                                    <div className="text-2xl mb-2">🟢</div>
+                                    <div className="text-2xl mb-2"></div>
                                     <p className="text-text-muted text-sm">{t('noActiveCorridors', city)}</p>
                                     {!user && <p className="text-text-muted text-xs mt-1">{t('signInCreate')}</p>}
                                 </div>
@@ -811,10 +811,10 @@ export default function PortalPage() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="text-xs text-text-secondary leading-relaxed">{c.originName} → {c.destName}</div>
+                                                <div className="text-xs text-text-secondary leading-relaxed">{c.originName} {'->'} {c.destName}</div>
                                                 {cNodes.length > 0 && (
                                                     <div className="mt-3">
-                                                        <CorridorStatusBox nodes={cNodes} activeIdx={cActiveIdx} eta={c.durationText || '—'} stops={0} />
+                                                        <CorridorStatusBox nodes={cNodes} activeIdx={cActiveIdx} eta={c.durationText || ''} stops={0} />
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-3 mt-2">

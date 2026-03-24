@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -107,7 +107,7 @@ export default function ProfilePage() {
             <div className="relative z-10 pt-24 pb-8 px-6">
                 <div className="max-w-2xl mx-auto">
                     <Link href="/portal" className="text-text-muted hover:text-white text-sm transition-colors no-underline inline-flex items-center gap-1 mb-6">
-                        ← Back to Portal
+                         Back to Portal
                     </Link>
 
                     <div className="flex items-center gap-5 mb-8">
@@ -130,9 +130,9 @@ export default function ProfilePage() {
                         {!editing ? (
                             <div className="space-y-6">
                                 <div>
-                                    <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide mb-3">👤 Personal Information</h3>
+                                    <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide mb-3"> Personal Information</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div><div className="text-[0.7rem] text-text-muted uppercase tracking-wide mb-1">Name</div><div className="text-white font-medium">{profile?.name || '—'}</div></div>
+                                        <div><div className="text-[0.7rem] text-text-muted uppercase tracking-wide mb-1">Name</div><div className="text-white font-medium">{profile?.name || ''}</div></div>
                                         <div><div className="text-[0.7rem] text-text-muted uppercase tracking-wide mb-1">Email</div><div className="text-white font-medium">{user.email}</div></div>
                                     </div>
                                 </div>
@@ -140,38 +140,38 @@ export default function ProfilePage() {
                                 <div className="border-t border-white/5" />
 
                                 <div>
-                                    <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide mb-3">🚗 Vehicle Details</h3>
+                                    <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide mb-3"> Vehicle Details</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div><div className="text-[0.7rem] text-text-muted uppercase tracking-wide mb-1">Vehicle Type</div><div className="text-white font-medium capitalize">{profile?.vehicleType || '—'}</div></div>
-                                        <div><div className="text-[0.7rem] text-text-muted uppercase tracking-wide mb-1">Vehicle Number</div><div className="text-white font-medium font-mono">{profile?.vehicleNumber || '—'}</div></div>
+                                        <div><div className="text-[0.7rem] text-text-muted uppercase tracking-wide mb-1">Vehicle Type</div><div className="text-white font-medium capitalize">{profile?.vehicleType || ''}</div></div>
+                                        <div><div className="text-[0.7rem] text-text-muted uppercase tracking-wide mb-1">Vehicle Number</div><div className="text-white font-medium font-mono">{profile?.vehicleNumber || ''}</div></div>
                                     </div>
                                 </div>
 
                                 <div className="border-t border-white/5" />
 
                                 <div>
-                                    <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide mb-3">🪪 Identity Documents</h3>
+                                    <h3 className="text-sm font-bold text-text-muted uppercase tracking-wide mb-3"> Identity Documents</h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-white/[0.02] border border-cyan-500/15 rounded-xl p-4">
                                             <div className="text-[0.7rem] text-cyan-400 uppercase tracking-wide mb-1 font-semibold">Aadhaar Number</div>
                                             <div className="text-white font-mono text-sm">
                                                 {profile?.aadhaarNumber
                                                     ? `${profile.aadhaarNumber.slice(0, 4)} ${profile.aadhaarNumber.slice(4, 8)} ${profile.aadhaarNumber.slice(8)}`
-                                                    : '—'}
+                                                    : ''}
                                             </div>
-                                            <div className="mt-2 text-[0.65rem] text-text-muted">{profile?.aadhaarNumber ? '✅ Submitted' : '⚠️ Not provided'}</div>
+                                            <div className="mt-2 text-[0.65rem] text-text-muted">{profile?.aadhaarNumber ? ' Submitted' : '! Not provided'}</div>
                                         </div>
                                         <div className="bg-white/[0.02] border border-cyan-500/15 rounded-xl p-4">
                                             <div className="text-[0.7rem] text-cyan-400 uppercase tracking-wide mb-1 font-semibold">Driving License</div>
-                                            <div className="text-white font-mono text-sm">{profile?.dlNumber || '—'}</div>
-                                            <div className="mt-2 text-[0.65rem] text-text-muted">{profile?.dlNumber ? '✅ Submitted' : '⚠️ Not provided'}</div>
+                                            <div className="text-white font-mono text-sm">{profile?.dlNumber || ''}</div>
+                                            <div className="mt-2 text-[0.65rem] text-text-muted">{profile?.dlNumber ? ' Submitted' : '! Not provided'}</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <button onClick={() => setEditing(true)}
                                     className="w-full mt-2 py-3 rounded-xl font-bold bg-gradient-to-r from-cyan-500 to-cyan-600 text-black transition-all hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] cursor-pointer border-none font-sans shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-                                    ✏️ Edit Profile
+                                     Edit Profile
                                 </button>
                             </div>
                         ) : (
@@ -184,7 +184,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 flex flex-col gap-3">
-                                    <div className="text-[0.75rem] font-bold text-text-muted uppercase tracking-wide mb-1">🚗 Vehicle</div>
+                                    <div className="text-[0.75rem] font-bold text-text-muted uppercase tracking-wide mb-1"> Vehicle</div>
                                     <div className="flex gap-2">
                                         {[['ambulance', 'Ambulance'], ['fire', 'Fire Truck'], ['vvip', 'VVIP']].map(([v, l]) => (
                                             <button key={v} type="button" onClick={() => setForm(f => ({ ...f, vehicleType: v }))}
@@ -197,12 +197,12 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="bg-white/[0.02] border border-cyan-600/20 rounded-xl p-4 flex flex-col gap-2">
-                                    <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide">🪪 Aadhaar Number</div>
+                                    <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide"> Aadhaar Number</div>
                                     <input className="input-field font-mono" value={form.aadhaarNumber} onChange={e => setForm(f => ({ ...f, aadhaarNumber: e.target.value }))} placeholder="1234 5678 9012" maxLength={14} />
                                 </div>
 
                                 <div className="bg-white/[0.02] border border-cyan-600/20 rounded-xl p-4 flex flex-col gap-2">
-                                    <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide">🚘 Driving License</div>
+                                    <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide"> Driving License</div>
                                     <input className="input-field font-mono" value={form.dlNumber} onChange={e => setForm(f => ({ ...f, dlNumber: e.target.value }))} placeholder="DL-0420110012345" />
                                 </div>
 
@@ -213,7 +213,7 @@ export default function ProfilePage() {
                                     </button>
                                     <button type="submit" disabled={saving}
                                         className="flex-1 py-3 rounded-xl font-bold bg-gradient-to-r from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:shadow-[0_0_25px_rgba(34,211,238,0.3)] disabled:opacity-50 transition-all cursor-pointer font-sans border-none">
-                                        {saving ? 'Saving...' : '💾 Save Changes'}
+                                        {saving ? 'Saving...' : ' Save Changes'}
                                     </button>
                                 </div>
                             </form>

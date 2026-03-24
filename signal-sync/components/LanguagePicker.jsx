@@ -30,7 +30,7 @@ export default function LanguagePicker() {
         }}>
             {/* Logo */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#0c3547', border: '1px solid rgba(34,211,238,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22d3ee', fontSize: '1.1rem' }}>⬡</div>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#0c3547', border: '1px solid rgba(34,211,238,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22d3ee', fontSize: '1.1rem' }}>🚥</div>
                 <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f1f5f9' }}>
                     <span style={{ color: '#22d3ee' }}>Signal</span>Sync
                 </span>

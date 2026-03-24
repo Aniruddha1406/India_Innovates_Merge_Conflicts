@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -397,7 +397,7 @@ export default function IntersectionModal({ cam, camState, onClose }) {
                                 <div style={{ marginTop: 8, fontSize: '0.48rem', color: 'rgba(255,255,255,0.22)', lineHeight: 1.5 }}>
                                     {signalState.mode === 'dynamic'
                                         ? `YOLO detected ${Math.abs(ns_density - ew_density)}% higher density on ${signalState.green_axis === 'ns' ? 'N/S' : 'E/W'} axis -> assigned GREEN`
-                                        : `Traffic equal within 10% threshold -> fixed 20s/5s/15s cycle`}
+                                        : `Traffic equal within 10% threshold {'->'} fixed 20s/5s/15s cycle`}
                                 </div>
                             )}
                         </div>

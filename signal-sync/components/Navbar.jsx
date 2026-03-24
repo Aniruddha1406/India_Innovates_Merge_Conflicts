@@ -33,7 +33,7 @@ export default function Navbar() {
         <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-10 py-3.5 border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-bg-deep/95' : 'bg-bg-deep/80'}`}>
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 text-white font-extrabold text-xl tracking-tight no-underline">
-                <div className="w-9 h-9 rounded-[6px] bg-[#0c3547] border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">⬡</div>
+                <div className="w-9 h-9 rounded-[6px] bg-[#0c3547] border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">🚥</div>
                 <span><span className="text-cyan-400">Signal</span>Sync</span>
             </Link>
 
@@ -66,7 +66,7 @@ export default function Navbar() {
                         color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600,
                         cursor: 'pointer', fontFamily: 'Outfit, sans-serif',
                     }}>
-                        {currentLang.native} <span style={{ opacity: 0.5, fontSize: '0.65rem' }}>▾</span>
+                        {currentLang.native} <span style={{ opacity: 0.5, fontSize: '0.65rem' }}></span>
                     </button>
                     {langOpen && (
                         <div style={{
@@ -98,7 +98,7 @@ export default function Navbar() {
                 {user ? (
                     <>
                         <Link href="/profile" className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition-all no-underline">
-                            👤 Profile
+                             Profile
                         </Link>
                         <button onClick={handleLogout} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold bg-white/5 text-text-secondary border border-white/5 hover:bg-accent-red/10 hover:text-accent-red hover:border-accent-red/20 transition-all cursor-pointer font-sans">
                             Logout
@@ -116,7 +116,7 @@ export default function Navbar() {
                 )}
 
                 <Link href="/portal" className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 text-black transition-all no-underline shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                    🟢 {t('greenCorridor') || 'Green Corridor'}
+                     {t('greenCorridor') || 'Green Corridor'}
                 </Link>
             </div>
         </nav>

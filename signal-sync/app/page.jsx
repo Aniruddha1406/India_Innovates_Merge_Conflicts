@@ -6,7 +6,7 @@ import Badge from '@/components/Badge';
 import StatusDot from '@/components/StatusDot';
 import { useLanguage } from '@/components/LanguageProvider';
 
-/* ── Stat counter hook ── */
+/* -- Stat counter hook -- */
 function useCountUp(target, duration = 1800) {
     const [value, setValue] = useState(0);
     const ref = useRef(null);
@@ -30,7 +30,7 @@ function useCountUp(target, duration = 1800) {
     return [value, ref];
 }
 
-/* ── Traffic Light (hero) ── */
+/* -- Traffic Light (hero) -- */
 function TrafficLight({ state }) {
     return (
         <div className="flex flex-col items-center gap-1 bg-[#0a0a0a] border-2 border-[#222] rounded-[14px] p-2">
@@ -45,7 +45,7 @@ function TrafficLight({ state }) {
     );
 }
 
-/* ── Hero intersection animation ── */
+/* -- Hero intersection animation -- */
 function HeroVisual() {
     const [tlState, setTlState] = useState({ ns: 'red', ew: 'green' });
     const [ambX, setAmbX] = useState(0);
@@ -84,8 +84,8 @@ function HeroVisual() {
                 <div className="absolute bottom-5 left-1/2 -translate-x-1/2"><TrafficLight state={tlState.ns} /></div>
                 <div className="absolute left-5 top-1/2 -translate-y-1/2"><div className="flex gap-1 bg-[#0a0a0a] border-2 border-[#222] rounded-[14px] p-2">{['red', 'amber', 'green'].map(c => <div key={c} className={`w-[22px] h-[22px] rounded-full ${tlState.ew === c ? `tl-light-active-${c}` : 'bg-white/5'}`} />)}</div></div>
                 <div className="absolute right-5 top-1/2 -translate-y-1/2"><div className="flex gap-1 bg-[#0a0a0a] border-2 border-[#222] rounded-[14px] p-2">{['red', 'amber', 'green'].map(c => <div key={c} className={`w-[22px] h-[22px] rounded-full ${tlState.ew === c ? `tl-light-active-${c}` : 'bg-white/5'}`} />)}</div></div>
-                {/* Ambulance — flipped so it faces right (forward direction) */}
-                <div className="absolute text-xl z-10 leading-none" style={{ top: '140px', left: `${ambX}px`, transform: 'scaleX(-1)' }}>🚑</div>
+                {/* Ambulance  flipped so it faces right (forward direction) */}
+                <div className="absolute text-xl z-10 leading-none" style={{ top: '140px', left: `${ambX}px`, transform: 'scaleX(-1)' }}></div>
                 {/* Scan line */}
                 <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan to-transparent opacity-80 animate-scan" />
                 {/* Info overlay */}
@@ -122,7 +122,7 @@ function HeroVisual() {
     );
 }
 
-/* ── Stat Card ── */
+/* -- Stat Card -- */
 function StatCard({ target, unit, label }) {
     const [value, ref] = useCountUp(target);
     return (
@@ -136,7 +136,7 @@ function StatCard({ target, unit, label }) {
     );
 }
 
-/* ── Pillar Card ── */
+/* -- Pillar Card -- */
 function PillarCard({ letter, badge, variant, title, desc, features, tags }) {
     const borderMap = { cyan: 'border-accent-cyan/25 shadow-[0_0_0_1px_rgba(0,245,255,0.1),0_20px_60px_rgba(0,245,255,0.05)]', green: 'border-accent-green/25 shadow-[0_0_0_1px_rgba(0,255,157,0.1),0_20px_60px_rgba(0,255,157,0.05)]', violet: 'border-accent-violet/25' };
     const letterBg = { cyan: 'bg-[rgba(0,245,255,0.15)] text-accent-cyan', green: 'bg-[rgba(0,255,157,0.15)] text-accent-green', violet: 'bg-[rgba(124,58,237,0.15)] text-[#a78bfa]' };
@@ -163,11 +163,11 @@ function PillarCard({ letter, badge, variant, title, desc, features, tags }) {
     );
 }
 
-/* ── Flow Panel ── */
+/* -- Flow Panel -- */
 const FLOWS = [
     {
         id: 0, label: 'Commuter', badge: 'cyan', color: 'cyan',
-        title: 'Everyday Commuter — Smart Routing',
+        title: 'Everyday Commuter  Smart Routing',
         desc: 'The public-facing layer. Every citizen benefits from AI-optimized routing without any special access.',
         steps: [
             ['Open the public app', 'Enter your destination as usual'],
@@ -179,7 +179,7 @@ const FLOWS = [
     {
         id: 1, label: 'Ambulance', badge: 'red', color: 'red',
         title: 'Verified Ambulance Dispatcher',
-        desc: 'Planned Green Corridor — zero stops from accident site to hospital.',
+        desc: 'Planned Green Corridor  zero stops from accident site to hospital.',
         steps: [
             ['Dispatcher logs in', 'Authenticates via secure Green Corridor Portal with hospital credentials'],
             ['Enter Route', 'Our custom A* graph algorithm calculates the fastest, clearest path'],
@@ -189,23 +189,23 @@ const FLOWS = [
     },
     {
         id: 2, label: 'Visual Override', badge: 'amber', color: 'amber',
-        title: 'Unexpected Emergency — Visual Failsafe',
-        desc: 'No GPS, no portal — the Edge-AI camera detects the vehicle and acts autonomously.',
+        title: 'Unexpected Emergency  Visual Failsafe',
+        desc: 'No GPS, no portal  the Edge-AI camera detects the vehicle and acts autonomously.',
         steps: [
-            ['Ambulance approaches', 'Not using the portal — GPS unavailable. Standard approach to intersection'],
-            ['YOLO Detection', 'Camera detects Class: Ambulance with 97%+ confidence — shape, color, strobe pattern'],
-            ['Safety Buffer Protocol', '3-second yellow clearance → cross-traffic turns red → emergency lane turns green'],
+            ['Ambulance approaches', 'Not using the portal  GPS unavailable. Standard approach to intersection'],
+            ['YOLO Detection', 'Camera detects Class: Ambulance with 97%+ confidence  shape, color, strobe pattern'],
+            ['Safety Buffer Protocol', '3-second yellow clearance -> cross-traffic turns red -> emergency lane turns green'],
             ['Auto-resume', 'Once vehicle clears the frame, intersection instantly returns to AI dynamic cycle'],
         ],
     },
     {
         id: 3, label: 'VVIP Convoy', badge: 'violet', color: 'violet',
         title: 'VVIP & Security Convoy Protocol',
-        desc: 'Highest clearance tier — full route lock with extended buffers before and after the convoy.',
+        desc: 'Highest clearance tier  full route lock with extended buffers before and after the convoy.',
         steps: [
             ['Security Chief logs in', 'MFA-secured access with VVIP-tier credentials'],
             ['Route Mapping', 'System prioritizes wider roads and fewer complex intersections for convoy safety'],
-            ['Convoy Lock activated', 'Extended green buffer — cross-traffic held red before AND after convoy passes'],
+            ['Convoy Lock activated', 'Extended green buffer  cross-traffic held red before AND after convoy passes'],
             ['Node Release', 'Once the final vehicle clears a node, AI dynamic cycle resumes instantly'],
         ],
     },
@@ -230,7 +230,7 @@ function FlowsSection() {
         {
             id: 1, labelKey: 'flow2Label', badge: 'red', color: 'red',
             titleKey: 'flow2Title',
-            desc: 'Planned Green Corridor — zero stops from accident site to hospital.',
+            desc: 'Planned Green Corridor  zero stops from accident site to hospital.',
             steps: [
                 ['Dispatcher logs in', 'Authenticates via secure Green Corridor Portal with hospital credentials'],
                 ['Enter Route', 'Our custom A* graph algorithm calculates the fastest, clearest path'],
@@ -241,22 +241,22 @@ function FlowsSection() {
         {
             id: 2, labelKey: 'flow3Label', badge: 'amber', color: 'amber',
             titleKey: 'flow3Title',
-            desc: 'No GPS, no portal — the Edge-AI camera detects the vehicle and acts autonomously.',
+            desc: 'No GPS, no portal  the Edge-AI camera detects the vehicle and acts autonomously.',
             steps: [
-                ['Ambulance approaches', 'Not using the portal — GPS unavailable. Standard approach to intersection'],
-                ['YOLO Detection', 'Camera detects Class: Ambulance with 97%+ confidence — shape, color, strobe pattern'],
-                ['Safety Buffer Protocol', '3-second yellow clearance → cross-traffic turns red → emergency lane turns green'],
+                ['Ambulance approaches', 'Not using the portal  GPS unavailable. Standard approach to intersection'],
+                ['YOLO Detection', 'Camera detects Class: Ambulance with 97%+ confidence  shape, color, strobe pattern'],
+                ['Safety Buffer Protocol', '3-second yellow clearance -> cross-traffic turns red -> emergency lane turns green'],
                 ['Auto-resume', 'Once vehicle clears the frame, intersection instantly returns to AI dynamic cycle'],
             ],
         },
         {
             id: 3, labelKey: 'flow4Label', badge: 'violet', color: 'violet',
             titleKey: 'flow4Title',
-            desc: 'Highest clearance tier — full route lock with extended buffers before and after the convoy.',
+            desc: 'Highest clearance tier  full route lock with extended buffers before and after the convoy.',
             steps: [
                 ['Security Chief logs in', 'MFA-secured access with VVIP-tier credentials'],
                 ['Route Mapping', 'System prioritizes wider roads and fewer complex intersections for convoy safety'],
-                ['Convoy Lock activated', 'Extended green buffer — cross-traffic held red before AND after convoy passes'],
+                ['Convoy Lock activated', 'Extended green buffer  cross-traffic held red before AND after convoy passes'],
                 ['Node Release', 'Once the final vehicle clears a node, AI dynamic cycle resumes instantly'],
             ],
         },
@@ -312,7 +312,7 @@ function FlowsSection() {
                             {flow.id === 0 && (
                                 <>
                                     <div className="text-[0.75rem] text-text-muted mb-3">LIVE ROUTE OPTIMIZER</div>
-                                    <div className="flex items-center gap-2 py-2 border-b border-white/5 text-xs"><span className="w-2 h-2 rounded-full bg-accent-green" />MG Road → City Hospital<span className="ml-auto text-accent-green font-bold">12 min ✓</span></div>
+                                    <div className="flex items-center gap-2 py-2 border-b border-white/5 text-xs"><span className="w-2 h-2 rounded-full bg-accent-green" />MG Road {'->'}  City Hospital<span className="ml-auto text-accent-green font-bold">12 min </span></div>
                                     <div className="flex items-center gap-2 py-2 text-xs opacity-60"><span className="w-2 h-2 rounded-full bg-accent-red" /><span className="line-through text-text-muted">Via Highway 4</span><span className="ml-auto text-accent-red">Congested</span></div>
                                     <div className="mt-4"><div className="text-[0.72rem] text-text-muted mb-1.5">NEXT INTERSECTION WAIT</div><div className="h-1.5 bg-white/5 rounded-full overflow-hidden"><div className="h-full progress-fill-green" style={{ width: '20%' }} /></div><div className="text-xs text-accent-green mt-1">~8 seconds</div></div>
                                 </>
@@ -320,7 +320,7 @@ function FlowsSection() {
                             {flow.id === 1 && (
                                 <>
                                     <div className="text-[0.75rem] text-text-muted mb-3">GREEN CORRIDOR STATUS</div>
-                                    {[['green', 'Node 1 — MG Road', 'GREEN ✓'], ['green', 'Node 2 — Station Rd', 'GREEN ✓'], ['amber', 'Node 3 — Jubilee Hills', 'PREP ⏱'], ['cyan', 'Node 4 — Sec 12', 'QUEUED'], ['cyan', 'City Hospital', 'QUEUED']].map(([c, n, s]) => (
+                                    {[['green', 'Node 1  MG Road', 'GREEN '], ['green', 'Node 2  Station Rd', 'GREEN '], ['amber', 'Node 3  Jubilee Hills', 'PREP '], ['cyan', 'Node 4  Sec 12', 'QUEUED'], ['cyan', 'City Hospital', 'QUEUED']].map(([c, n, s]) => (
                                         <div key={n} className={`flex items-center gap-2 p-2 rounded-lg text-xs mb-1.5 border cnode-${c === 'amber' ? 'preparing' : c === 'cyan' ? 'pending' : 'active'}`}><StatusDot color={c} />{n}<Badge variant={c === 'green' ? 'green' : c === 'amber' ? 'amber' : 'cyan'} className="ml-auto text-[0.65rem] py-0">{s}</Badge></div>
                                     ))}
                                     <div className="flex gap-4 mt-3 pt-3 border-t border-white/5 text-xs"><div><div className="text-text-muted">ETA</div><div className="font-bold text-accent-green">4m 12s</div></div><div><div className="text-text-muted">Stops</div><div className="font-bold text-accent-green">0</div></div><div><div className="text-text-muted">Nodes</div><div className="font-bold text-accent-cyan">5/5</div></div></div>
@@ -334,14 +334,14 @@ function FlowsSection() {
                                         <div className="cam-detect-box">Ambulance · 97.2%</div>
                                         <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan to-transparent animate-scan-fast opacity-60" />
                                     </div>
-                                    <div className="flex gap-2 mt-3 flex-wrap"><Badge variant="red">OVERRIDE ACTIVE</Badge><Badge variant="amber">YELLOW → RED → GREEN</Badge></div>
+                                    <div className="flex gap-2 mt-3 flex-wrap"><Badge variant="red">OVERRIDE ACTIVE</Badge><Badge variant="amber">YELLOW {'->'} RED {'->'} GREEN</Badge></div>
                                 </>
                             )}
                             {flow.id === 3 && (
                                 <>
                                     <div className="text-[0.75rem] text-text-muted mb-2">CONVOY LOCK STATUS</div>
                                     <div className="flex justify-center gap-2 my-3">{['[P]', '[VIP]', '[P]'].map((v, i) => <div key={i} className={`text-sm font-bold font-mono bg-white/5 border rounded-lg px-3 py-2 ${i === 1 ? 'bg-[rgba(255,184,0,0.15)] border-accent-amber text-accent-amber' : 'border-white/5 text-text-muted'}`}>{v}</div>)}</div>
-                                    <div className="text-center text-xs text-[#a78bfa] mb-3">← Extended Buffer Zone →</div>
+                                    <div className="text-center text-xs text-[#a78bfa] mb-3"> Extended Buffer Zone {'->'} </div>
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="bg-[rgba(255,59,92,0.15)] border border-accent-red/30 rounded-lg p-3 text-center"><div className="text-[0.7rem] text-text-muted">Cross Traffic</div><div className="text-accent-red font-bold text-sm">HELD RED</div></div>
                                         <div className="bg-[rgba(0,255,157,0.1)] border border-accent-green/30 rounded-lg p-3 text-center"><div className="text-[0.7rem] text-text-muted">Convoy Lane</div><div className="text-accent-green font-bold text-sm">ALL GREEN</div></div>
@@ -356,14 +356,14 @@ function FlowsSection() {
     );
 }
 
-/* ── FAQ ── */
+/* -- FAQ -- */
 const FAQS = [
     { q: 'What if two ambulances approach from opposite directions?', a: 'The system assigns priority via a FIFO queue. If hospital integration is active, the vehicle carrying the more critical patient (e.g., Cardiac Arrest > Broken Arm) receives priority. The secondary ambulance gets a 3-second delayed corridor activation.' },
     { q: 'What if the camera goes down or is covered in rain?', a: 'The system automatically detects a null or degraded camera feed and reverts to pre-programmed fixed-timer fallback mode. An alert is sent to the control center. Normal AI operation resumes automatically when the feed is restored.' },
     { q: 'How do we prevent abuse of the VVIP system?', a: 'Every "Green Corridor" request is immutably logged with a timestamp, user ID, GPS track, and session token. MFA is required for VVIP-tier access. All logs are auditable and tamper-evident.' },
     { q: 'What if the internet connection is lost mid-corridor?', a: 'Each intersection node caches the corridor plan locally at activation. If cloud connectivity drops, the node executes its pre-cached green schedule autonomously until the last downloaded instruction expires, then defaults to safe fixed-timer mode.' },
     { q: 'Does this worsen pedestrian safety at crossings?', a: 'No. The algorithm enforces a non-negotiable minimum 15-second pedestrian phase regardless of vehicle density. Emergency overrides always trigger the 3-second yellow safety buffer, giving pedestrians time to clear.' },
-    { q: 'Is this scalable to an entire city?', a: 'Yes. Edge AI at each node means processing is distributed — no single server bottleneck. The central server only handles coordination signals (WebSocket messages), not video processing.' },
+    { q: 'Is this scalable to an entire city?', a: 'Yes. Edge AI at each node means processing is distributed  no single server bottleneck. The central server only handles coordination signals (WebSocket messages), not video processing.' },
 ];
 
 function FaqSection() {
@@ -389,7 +389,7 @@ function FaqSection() {
                             className={`bg-bg-card border rounded-xl p-5 cursor-pointer transition-all hover:border-accent-cyan/20 ${open === i ? 'border-accent-cyan/25' : 'border-white/5'}`}>
                             <div className="flex items-center gap-2.5 font-semibold text-sm">
                                 <span>{t(faq.qKey)}</span>
-                                <span className={`ml-auto text-text-muted transition-transform ${open === i ? 'rotate-180 text-accent-cyan' : ''}`}>↓</span>
+                                <span className={`ml-auto text-text-muted transition-transform ${open === i ? 'rotate-180 text-accent-cyan' : ''}`}></span>
                             </div>
                             {open === i && <p className="text-text-secondary text-[0.875rem] leading-relaxed mt-3 pt-3 border-t border-white/5">{t(faq.aKey)}</p>}
                         </div>
@@ -400,7 +400,7 @@ function FaqSection() {
     );
 }
 
-/* ── Main Page Export ── */
+/* -- Main Page Export -- */
 export default function HomePage() {
     const { t } = useLanguage();
     return (
@@ -453,9 +453,9 @@ export default function HomePage() {
                     <p className="text-text-secondary mb-12 max-w-xl">{t('crisisDesc')}</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {[
-                            { icon: '🏥', bg: 'bg-[rgba(255,59,92,0.15)]', color: 'text-accent-red', titleKey: 'crisis1Title', descKey: 'crisis1Desc', statKey: 'crisis1Stat', statLabelKey: 'crisis1StatLabel' },
-                            { icon: '🛡️', bg: 'bg-[rgba(255,184,0,0.15)]', color: 'text-accent-amber', titleKey: 'crisis2Title', descKey: 'crisis2Desc', statKey: 'crisis2Stat', statLabelKey: 'crisis2StatLabel' },
-                            { icon: '🚗', bg: 'bg-[rgba(0,245,255,0.10)]', color: 'text-accent-cyan', titleKey: 'crisis3Title', descKey: 'crisis3Desc', statKey: 'crisis3Stat', statLabelKey: 'crisis3StatLabel' },
+                            { icon: '', bg: 'bg-[rgba(255,59,92,0.15)]', color: 'text-accent-red', titleKey: 'crisis1Title', descKey: 'crisis1Desc', statKey: 'crisis1Stat', statLabelKey: 'crisis1StatLabel' },
+                            { icon: '', bg: 'bg-[rgba(255,184,0,0.15)]', color: 'text-accent-amber', titleKey: 'crisis2Title', descKey: 'crisis2Desc', statKey: 'crisis2Stat', statLabelKey: 'crisis2StatLabel' },
+                            { icon: '', bg: 'bg-[rgba(0,245,255,0.10)]', color: 'text-accent-cyan', titleKey: 'crisis3Title', descKey: 'crisis3Desc', statKey: 'crisis3Stat', statLabelKey: 'crisis3StatLabel' },
                         ].map(({ icon, bg, color, titleKey, descKey, statKey, statLabelKey }) => (
                             <div key={titleKey} className="bg-bg-card border border-white/5 rounded-xl p-8 hover:-translate-y-1 transition-all">
                                 <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center text-2xl mb-4`}>{icon}</div>
@@ -505,7 +505,7 @@ export default function HomePage() {
                     {/* Brand */}
                     <div className="md:col-span-1">
                         <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl no-underline text-white mb-3">
-                            <div className="w-9 h-9 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan">⬡</div>
+                            <div className="w-9 h-9 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan"></div>
                             <span><span className="text-accent-cyan">Signal</span>Sync</span>
                         </Link>
                         <p className="text-text-muted text-xs leading-relaxed mb-4">{t('footerDesc')}</p>

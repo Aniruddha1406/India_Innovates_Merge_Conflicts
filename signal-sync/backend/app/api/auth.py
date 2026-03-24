@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+﻿from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -11,7 +11,7 @@ import re
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-# ── Request / Response Models ────────────────────────────────────────────────
+# -- Request / Response Models ------------------------------------------------
 
 class RegisterRequest(BaseModel):
     firebase_uid: str
@@ -44,7 +44,7 @@ class ProfileUpdate(BaseModel):
     phone: Optional[str] = None
 
 
-# ── Endpoints ────────────────────────────────────────────────────────────────
+# -- Endpoints ----------------------------------------------------------------
 
 @router.post("/register")
 async def register_user(req: RegisterRequest, db: AsyncSession = Depends(get_db)):

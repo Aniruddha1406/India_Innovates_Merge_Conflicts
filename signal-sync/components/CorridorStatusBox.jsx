@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 /**
  * CorridorStatusBox
  * Displays named intersection nodes for an active green corridor,
- * with real-time status animation: GREEN  -> PREP  -> QUEUED
+ * with real-time status animation: GREEN -> PREP  {'->'} QUEUED
  *
  * Props:
  *   nodes         [{ id, name }] ordered list of intersections on route

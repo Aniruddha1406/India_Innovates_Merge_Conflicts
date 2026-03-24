@@ -47,6 +47,7 @@ export default function AdminPage() {
     // Create corridor form state (admin)
     const [createForm, setCreateForm] = useState({ vehicleNumber: '', vehicleType: 'ambulance', city: 'Delhi', originName: '', destName: '' });
     const [creating, setCreating] = useState(false);
+    const [cityFilter, setCityFilter] = useState('All');
 
     useEffect(() => { const u = subscribeAllCorridors(setCds); return () => u(); }, []);
     useEffect(() => { const u = subscribeAllUsers(setUsers); return () => u(); }, []);
@@ -89,8 +90,10 @@ export default function AdminPage() {
         }
     }
 
-    const active = corridors.filter(c => c.status === 'active');
-    const history = corridors.filter(c => c.status !== 'active');
+    const allCities = ['All', ...Array.from(new Set(corridors.map(c => c.city).filter(Boolean))).sort()];
+    const filteredCorridors = cityFilter === 'All' ? corridors : corridors.filter(c => c.city === cityFilter);
+    const active = filteredCorridors.filter(c => c.status === 'active');
+    const history = filteredCorridors.filter(c => c.status !== 'active');
 
     if (loading || !user || userProfile?.role !== 'admin') return (
         <div className="min-h-screen bg-bg-deep flex items-center justify-center text-text-muted">Verifying access</div>
@@ -146,6 +149,18 @@ export default function AdminPage() {
                 {/* -- Corridors Tab -- */}
                 {tab === 'corridors' && (
                     <div className="flex flex-col gap-4">
+                        {/* City filter pills */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[0.6rem] text-text-muted uppercase tracking-widest mr-1">City:</span>
+                            {allCities.map(city => (
+                                <button key={city} onClick={() => setCityFilter(city)}
+                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all font-sans cursor-pointer border ${
+                                        cityFilter === city
+                                            ? 'bg-accent-cyan/15 border-accent-cyan/40 text-accent-cyan'
+                                            : 'bg-white/[0.03] border-white/5 text-text-muted hover:border-accent-cyan/20 hover:text-text-secondary'
+                                    }`}>{city}</button>
+                            ))}
+                        </div>
                         <div>
                             <h2 className="font-bold text-sm uppercase tracking-widest text-text-muted mb-3">Active Corridors ({active.length})</h2>
                             {active.length === 0 && <p className="text-text-muted text-sm">No active corridors.</p>}
@@ -175,6 +190,7 @@ export default function AdminPage() {
                                 {history.map(c => (
                                     <div key={c.id} className="bg-white/[0.02] border border-white/5 rounded-xl px-4 py-3 flex items-center gap-4">
                                         <span className="font-mono text-xs text-text-muted">{c.vehicleNumber}</span>
+                                        <span className="text-[0.6rem] font-semibold text-accent-cyan bg-accent-cyan/10 border border-accent-cyan/20 rounded px-1.5 py-0.5">{c.city}</span>
                                         <span className="text-xs text-text-secondary flex-1">{c.originName} {'->'} {c.destName}</span>
                                         <Badge variant={c.status === 'terminated' ? 'red' : 'green'}>{c.status}</Badge>
                                     </div>

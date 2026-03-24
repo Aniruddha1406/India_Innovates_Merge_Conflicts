@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Badge from '@/components/Badge';
@@ -8,7 +8,7 @@ import YoloFailsafePanel from '@/components/YoloFailsafePanel';
 import { CITY_NODES } from '@/lib/cityNodes';
 import { useLanguage } from '@/components/LanguageProvider';
 
-/* ── Build node rows from real city intersection data ── */
+/* -- Build node rows from real city intersection data -- */
 function buildCityNodes(cityName) {
     const cityNodes = CITY_NODES[cityName] || CITY_NODES['Delhi'];
     // For display purposes give each node a seeded density
@@ -17,13 +17,13 @@ function buildCityNodes(cityName) {
         id: `N-${String(i + 1).padStart(2, '0')}`,
         realId: n.id,
         name: n.name,
-        density: ((seed * 31 + i * 17 + 19) % 80) + 12,  // deterministic 12–91%
+        density: ((seed * 31 + i * 17 + 19) % 80) + 12,  // deterministic 1291%
         corridor: i < 2,          // first 2 nodes treated as corridor-active demo
         emergency: i === 1,       // second node has emergency badge
     }));
 }
 
-/* ── City-specific lane names ── */
+/* -- City-specific lane names -- */
 const CITY_LANES = {
     Delhi: ['Ring Road', 'MG Road', 'NH-48 (Airport)', 'Outer Ring Rd'],
     Mumbai: ['Western Express Hwy', 'Eastern Express Hwy', 'Andheri-Kurla Rd', 'SV Road'],
@@ -49,7 +49,7 @@ function densityBarColor(d) {
     return 'progress-fill-red';
 }
 
-/* ── Compact Node row ── */
+/* -- Compact Node row -- */
 function NodeRow({ node, onClick }) {
     const dot = node.density < 40 ? 'bg-accent-green' : node.density < 70 ? 'bg-accent-amber' : 'bg-accent-red';
     return (
@@ -70,7 +70,7 @@ function NodeRow({ node, onClick }) {
     );
 }
 
-/* ── Node Detail Panel (slide-up) ── */
+/* -- Node Detail Panel (slide-up) -- */
 function NodeDetail({ node, onClose, t }) {
     if (!node) return null;
     const ns = Math.min(node.density + 10, 99);
@@ -88,7 +88,7 @@ function NodeDetail({ node, onClose, t }) {
                 </div>
                 <div className="flex gap-2">
                     <Link href="/portal" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent-cyan text-black no-underline">{t('activateCorridor')}</Link>
-                    <button onClick={onClose} className="px-2.5 py-1.5 rounded-lg text-xs bg-white/5 text-text-muted hover:text-white font-sans cursor-pointer">✕</button>
+                    <button onClick={onClose} className="px-2.5 py-1.5 rounded-lg text-xs bg-white/5 text-text-muted hover:text-white font-sans cursor-pointer"></button>
                 </div>
             </div>
 
@@ -127,7 +127,7 @@ function NodeDetail({ node, onClose, t }) {
     );
 }
 
-/* ── Live Corridor Card ── */
+/* -- Live Corridor Card -- */
 function CorridorCard({ corridor, onTerminate, t }) {
     const [elapsed, setElapsed] = useState(0);
     useEffect(() => {
@@ -172,7 +172,7 @@ function CorridorCard({ corridor, onTerminate, t }) {
 
             {nodes.length > 0 && (
                 <div className="mb-3">
-                    <CorridorStatusBox nodes={nodes} activeIdx={activeNodeIdx} eta={corridor.duration || '—'} stops={0} />
+                    <CorridorStatusBox nodes={nodes} activeIdx={activeNodeIdx} eta={corridor.duration || ''} stops={0} />
                 </div>
             )}
 
@@ -183,7 +183,7 @@ function CorridorCard({ corridor, onTerminate, t }) {
     );
 }
 
-/* ── Demo Corridor Status — city-aware, auto-animates ── */
+/* -- Demo Corridor Status  city-aware, auto-animates -- */
 function DemoCorridorStatus({ etaStr, cityName }) {
     const cityNodes = CITY_NODES[cityName] || CITY_NODES['Delhi'];
     const demoNodes = cityNodes.slice(0, 5).map(n => ({ id: n.id, name: n.name }));
@@ -291,19 +291,19 @@ export default function DashboardPage() {
     const avgDensity = Math.round(nodes.reduce((s, n) => s + n.density, 0) / nodes.length);
     const cityLanes = selectedCity ? getCityLanes(selectedCity) : getCityLanes('Delhi');
 
-    /* ── City picker ── */
+    /* -- City picker -- */
     if (!selectedCity) {
         return (
             <div className="bg-bg-deep text-text-primary font-sans min-h-screen flex flex-col">
                 <div className="grid-bg" />
                 <header className="relative z-10 flex items-center justify-between px-6 py-4 bg-bg-deep/95 border-b border-white/5">
                     <Link href="/" className="flex items-center gap-2 font-extrabold text-xl no-underline text-white">
-                        <div className="w-8 h-8 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan">⬡</div>
+                        <div className="w-8 h-8 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan"></div>
                         <span><span className="text-accent-cyan">Signal</span>Sync</span>
                     </Link>
                     <div className="flex items-center gap-3">
-                        <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline">🔒 {t('portalLink')}</Link>
-                        <Link href="/" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">← {t('homeLink')}</Link>
+                        <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline"> {t('portalLink')}</Link>
+                        <Link href="/" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline"> {t('homeLink')}</Link>
                     </div>
                 </header>
 
@@ -320,7 +320,7 @@ export default function DashboardPage() {
                                 className="flex flex-col items-start gap-1 bg-bg-card border border-white/5 hover:border-accent-cyan/40 hover:bg-accent-cyan/[0.04] rounded-2xl p-5 text-left transition-all cursor-pointer font-sans group">
                                 <span className="text-base font-bold group-hover:text-accent-cyan transition-colors">{city.name}</span>
                                 <span className="text-[0.7rem] text-text-muted">{city.state}</span>
-                                {city.name === 'Delhi' && <span className="text-[0.6rem] font-bold text-accent-cyan mt-1.5">● {t('liveData')}</span>}
+                                {city.name === 'Delhi' && <span className="text-[0.6rem] font-bold text-accent-cyan mt-1.5"> {t('liveData')}</span>}
                             </button>
                         ))}
                     </div>
@@ -329,7 +329,7 @@ export default function DashboardPage() {
         );
     }
 
-    /* ── Main Dashboard ── */
+    /* -- Main Dashboard -- */
     return (
         <div className="bg-bg-deep text-text-primary font-sans min-h-screen flex flex-col">
             <div className="grid-bg" />
@@ -338,7 +338,7 @@ export default function DashboardPage() {
             <header className="relative z-10 flex items-center justify-between px-6 py-3.5 bg-bg-deep/95 border-b border-white/5 flex-shrink-0">
                 <div className="flex items-center gap-3">
                     <Link href="/" className="flex items-center gap-2 font-extrabold text-lg no-underline text-white">
-                        <div className="w-7 h-7 rounded-[5px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan text-sm">⬡</div>
+                        <div className="w-7 h-7 rounded-[5px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan text-sm"></div>
                         <span><span className="text-accent-cyan">Signal</span>Sync</span>
                     </Link>
                     <div className="w-px h-5 bg-white/10" />
@@ -375,7 +375,7 @@ export default function DashboardPage() {
                 {/* LEFT column */}
                 <div className="flex flex-col gap-6">
 
-                    {/* ─── Feature Navigator ─── */}
+                    {/* --- Feature Navigator --- */}
                     <div className="bg-bg-card border border-white/5 rounded-2xl p-4">
                         <div className="text-[0.6rem] font-bold uppercase tracking-widest text-text-muted mb-3">{t('featureNav')}</div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -402,7 +402,7 @@ export default function DashboardPage() {
                     <section>
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">{t('liveGreenCorridors')} — {selectedCity}</h2>
+                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">{t('liveGreenCorridors')}  {selectedCity}</h2>
                                 {cityLiveCorridors.length > 0 && (
                                     <span className="text-[0.6rem] font-bold bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan rounded-full px-2 py-0.5">{cityLiveCorridors.length} {t('activeCors')}</span>
                                 )}
@@ -412,7 +412,7 @@ export default function DashboardPage() {
 
                         {cityLiveCorridors.length === 0 ? (
                             <div className="border border-white/5 border-dashed rounded-2xl p-8 text-center">
-                                <div className="text-3xl mb-3">🚑</div>
+                                <div className="text-3xl mb-3"></div>
                                 <div className="text-sm font-semibold text-text-muted mb-2">{t('noActiveCorridorsCity')} {selectedCity}</div>
                                 <p className="text-xs text-text-muted mb-4">{t('corridorFromPortal')}</p>
                                 <Link href="/portal" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline hover:shadow-[0_0_20px_rgba(0,245,255,0.4)] transition-all">
@@ -432,7 +432,7 @@ export default function DashboardPage() {
                     <section className="relative">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">{t('intersectionNodes')} — {selectedCity}</h2>
+                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">{t('intersectionNodes')}  {selectedCity}</h2>
                                 <Badge variant="cyan">{nodes.length} {t('activeCors')}</Badge>
                             </div>
                             <div className="flex items-center gap-3 text-[0.65rem] text-text-muted">
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                         )}
                     </section>
 
-                    {/* ─── YOLO AI Traffic Density Panel (full-width) ─── */}
+                    {/* --- YOLO AI Traffic Density Panel (full-width) --- */}
                     <YoloFailsafePanel cityName={selectedCity} />
                 </div>
 
@@ -459,12 +459,12 @@ export default function DashboardPage() {
 
                     {/* Active corridor (static/demo) */}
                     <div className="bg-bg-card border border-white/5 rounded-2xl p-5">
-                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">🚑 {t('demoCorridor')} — {selectedCity}</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4"> {t('demoCorridor')}  {selectedCity}</div>
                         <div className="bg-accent-cyan/[0.04] border border-accent-cyan/15 rounded-xl p-4">
                             <div className="flex flex-wrap gap-1.5 mb-3"><Badge variant="red">AMB-042</Badge><Badge variant="green">{t('activeCors')}</Badge></div>
-                            <div className="text-xs font-semibold mb-1">📍 {(CITY_NODES[selectedCity] || CITY_NODES['Delhi'])[0]?.name || 'Start'}</div>
+                            <div className="text-xs font-semibold mb-1"> {(CITY_NODES[selectedCity] || CITY_NODES['Delhi'])[0]?.name || 'Start'}</div>
                             <div className="w-0.5 h-3 bg-gradient-to-b from-accent-green to-accent-cyan ml-2 my-1.5" />
-                            <div className="text-xs font-semibold mb-3">🏥 {(CITY_NODES[selectedCity] || CITY_NODES['Delhi'])[4]?.name || 'End'}</div>
+                            <div className="text-xs font-semibold mb-3"> {(CITY_NODES[selectedCity] || CITY_NODES['Delhi'])[4]?.name || 'End'}</div>
 
                             <DemoCorridorStatus etaStr={etaStr} cityName={selectedCity} />
 
@@ -478,7 +478,7 @@ export default function DashboardPage() {
 
                     {/* Lane density */}
                     <div className="bg-bg-card border border-white/5 rounded-2xl p-5">
-                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">🚗 {t('laneDensity')} — {selectedCity}</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4"> {t('laneDensity')}  {selectedCity}</div>
                         <div className="flex flex-col gap-3">
                             {cityLanes.map((label, i) => {
                                 const d = nodes[i * 4]?.density ?? 50;
@@ -499,7 +499,7 @@ export default function DashboardPage() {
 
                     {/* City stats */}
                     <div className="bg-bg-card border border-white/5 rounded-2xl p-5">
-                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">📊 {t('cityStats')}</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4"> {t('cityStats')}</div>
                         <div className="grid grid-cols-2 gap-3">
                             {[[t('avgWait'), '8.3s', 'text-text-primary'], [t('co2Saved'), '2.4 t', 'text-accent-green'], [t('fuelSaved'), '1,840L', 'text-accent-green'], [t('congestion'), `${avgDensity}%`, avgDensity > 70 ? 'text-accent-red' : 'text-accent-amber']].map(([l, v, c]) => (
                                 <div key={l} className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
@@ -512,7 +512,7 @@ export default function DashboardPage() {
 
                     {/* Actions */}
                     <div className="bg-bg-card border border-white/5 rounded-2xl p-5">
-                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4">⚡ {t('actions')}</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-text-muted mb-4"> {t('actions')}</div>
                         <Link href="/portal" className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-bold bg-accent-cyan text-black no-underline hover:shadow-[0_0_20px_rgba(0,245,255,0.4)] transition-all">
                             {t('newGreenCorridor')}
                         </Link>
