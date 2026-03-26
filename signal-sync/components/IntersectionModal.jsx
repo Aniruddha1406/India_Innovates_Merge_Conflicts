@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -10,10 +10,10 @@ const STREAM_BASE = 'http://localhost:8001';
 
 // 4 directions  each maps to its own YOLO-pipelined MJPEG stream
 const DIRECTION_VIEWS = [
-    { id: 'NORTH', color: '#00f5ff',  axisLabel: 'N/S' },
-    { id: 'SOUTH', color: '#00f5ff',  axisLabel: 'N/S' },
-    { id: 'EAST',  color: '#a78bfa',  axisLabel: 'E/W' },
-    { id: 'WEST',  color: '#a78bfa',  axisLabel: 'E/W' },
+    { id: 'NORTH', color: '#735EEF',  axisLabel: 'N/S' },
+    { id: 'SOUTH', color: '#735EEF',  axisLabel: 'N/S' },
+    { id: 'EAST',  color: '#4D7CFF',  axisLabel: 'E/W' },
+    { id: 'WEST',  color: '#4D7CFF',  axisLabel: 'E/W' },
 ];
 
 /* -- Stat card ----------------------------------------------- */
@@ -265,19 +265,20 @@ export default function IntersectionModal({ cam, camState, onClose }) {
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
             style={{
                 position: 'fixed', inset: 0, zIndex: 9999,
-                background: 'rgba(2,5,12,0.92)',
+                background: 'rgba(18,17,22,0.85)',
                 backdropFilter: 'blur(12px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: '20px',
                 animation: 'fadeIn 0.2s ease',
+                fontFamily: 'Inter, sans-serif'
             }}
         >
             <div style={{
                 width: '100%', maxWidth: 1000,
-                background: 'rgba(7,12,24,0.98)',
-                border: '1px solid rgba(0,245,255,0.15)',
-                borderRadius: 20, overflow: 'hidden',
-                boxShadow: '0 0 60px rgba(0,0,0,0.6)',
+                background: '#1C1825',
+                border: '0.8px solid rgba(255,255,255,0.12)',
+                borderRadius: 24, overflow: 'hidden',
+                boxShadow: '0 8px 60px rgba(0,0,0,0.6)',
                 display: 'flex', flexDirection: 'column',
                 maxHeight: '92vh',
             }}>

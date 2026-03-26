@@ -66,7 +66,7 @@ export default function LoginPage() {
             <div className="relative z-10 w-full max-w-[480px] mx-4 bg-[rgba(13,17,23,0.92)] backdrop-blur-xl border border-cyan-500/20 rounded-[32px] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
                 <div className="flex flex-col items-center mb-6">
                     <Link href="/" className="flex items-center gap-2.5 font-extrabold text-2xl mb-3 no-underline text-white">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(34,211,238,0.25)]"></div>
+                        <div className="w-12 h-12 rounded-[24px] bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(34,211,238,0.25)]"></div>
                         <span><span className="text-cyan-400">Signal</span>Sync</span>
                     </Link>
                     <h2 className="text-xl font-bold mt-1">{showReset ? t('resetPassword') : t('signInTitle')}</h2>
@@ -81,7 +81,7 @@ export default function LoginPage() {
                                 onChange={e => setResetEmail(e.target.value)} placeholder="your@email.com" />
                         </div>
                         {resetMsg && <p className={`text-sm text-center ${resetMsg.includes('sent') ? 'text-accent-green' : 'text-accent-red'}`}>{resetMsg}</p>}
-                        <button type="submit" disabled={resetLoading} className="w-full py-3.5 rounded-xl font-bold bg-gradient-to-r from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:shadow-[0_0_25px_rgba(34,211,238,0.35)] transition-all cursor-pointer border-none font-sans">
+                        <button type="submit" disabled={resetLoading} className="w-full py-3.5 rounded-[24px] font-bold bg-gradient-to-r from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:shadow-[0_0_25px_rgba(34,211,238,0.35)] transition-all cursor-pointer border-none font-sans">
                             {resetLoading ? t('sending') : t('sendResetEmail')}
                         </button>
                         <button type="button" onClick={() => { setShowReset(false); setResetMsg(''); }} className="text-sm text-text-muted hover:text-white mt-2 border-none bg-transparent cursor-pointer">{t('backToSignIn')}</button>
@@ -101,7 +101,7 @@ export default function LoginPage() {
                                 <input type="password" required className="input-field" value={password} onChange={e => setPassword(e.target.value)} placeholder="" />
                             </div>
                             {error && <p className="text-accent-red text-sm text-center">{error}</p>}
-                            <button type="submit" disabled={loading} className="w-full mt-2 py-3.5 rounded-xl font-bold bg-gradient-to-r from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:shadow-[0_0_25px_rgba(34,211,238,0.35)] disabled:opacity-50 transition-all cursor-pointer border-none font-sans">
+                            <button type="submit" disabled={loading} className="w-full mt-2 py-3.5 rounded-[24px] font-bold bg-gradient-to-r from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:shadow-[0_0_25px_rgba(34,211,238,0.35)] disabled:opacity-50 transition-all cursor-pointer border-none font-sans">
                                 {loading ? t('signingIn') : t('signInTitle')}
                             </button>
                         </form>

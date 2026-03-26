@@ -1,4 +1,4 @@
-﻿"""
+"""
 SignalSync Edge AI Simulator  Main YOLO Runner
 ===============================================
 Reads a local demo video file frame by frame, runs YOLOv8n object detection,
@@ -132,7 +132,7 @@ def run(video_path: str, use_webcam: bool, use_firebase: bool, headless: bool = 
             event_fired  = True
             cooldown_until = now + 30  # 30-second cooldown before next event
             conf_pct = round(last_best_conf * 100, 1)  # type: ignore
-            print(f"\n[ALERT] Emergency vehicle confirmed at {node['id']}  {node['name']}")  # type: ignore
+            print(f"\n[ALERT] Emergency vehicle confirmed at {node['id']} — {node['name']}")  # type: ignore
             print(f"        Confidence: {conf_pct}% · Firing Firebase event...")
 
             if use_firebase:

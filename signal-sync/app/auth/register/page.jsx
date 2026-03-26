@@ -95,7 +95,7 @@ export default function RegisterPage() {
             <div className="relative z-10 w-full max-w-md mx-4 bg-[rgba(13,17,23,0.92)] backdrop-blur-xl border border-cyan-500/20 rounded-[32px] p-10 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
                 <div className="flex flex-col items-center mb-7">
                     <Link href="/" className="flex items-center gap-2.5 font-extrabold text-2xl mb-3 no-underline text-white">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(34,211,238,0.25)]"></div>
+                        <div className="w-12 h-12 rounded-[24px] bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(34,211,238,0.25)]"></div>
                         <span><span className="text-cyan-400">Signal</span>Sync</span>
                     </Link>
                     <h2 className="text-xl font-bold mt-1">{t('registerTitle')}</h2>
@@ -118,12 +118,12 @@ export default function RegisterPage() {
                     </div>
 
                     {/* Vehicle section */}
-                    <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 flex flex-col gap-3">
+                    <div className="bg-white/[0.02] border border-white/10 rounded-[24px] p-4 flex flex-col gap-3">
                         <div className="text-[0.75rem] font-bold text-text-muted uppercase tracking-wide mb-1"> {t('vehicleNumber')}</div>
                         <div className="flex gap-2">
                             {[['ambulance', t('ambulanceLabel')], ['fire', t('fireTruckLabel')], ['vvip', t('vvipLabel')]].map(([v, l]) => (
                                 <button key={v} type="button" onClick={() => set('type', v)}
-                                    className={`flex-1 py-2 px-1 rounded-xl border text-xs transition-all font-sans cursor-pointer ${form.type === v ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-white/[0.02] border-white/5 text-text-secondary'}`}>
+                                    className={`flex-1 py-2 px-1 rounded-[24px] border text-xs transition-all font-sans cursor-pointer ${form.type === v ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-white/[0.02] border-white/5 text-text-secondary'}`}>
                                     {l}
                                 </button>
                             ))}
@@ -135,13 +135,13 @@ export default function RegisterPage() {
                     </div>
 
                     {/* Aadhaar section */}
-                    <div className="bg-white/[0.02] border border-cyan-600/20 rounded-xl p-4 flex flex-col gap-2">
+                    <div className="bg-white/[0.02] border border-cyan-600/20 rounded-[24px] p-4 flex flex-col gap-2">
                         <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide"> Aadhaar Number <span className="text-accent-red">*</span></div>
                         <input required className="input-field font-mono" value={form.aadhaarNumber} onChange={e => set('aadhaarNumber', e.target.value)} placeholder="1234 5678 9012" maxLength={14} />
                     </div>
 
                     {/* Driving License section */}
-                    <div className="bg-white/[0.02] border border-cyan-600/20 rounded-xl p-4 flex flex-col gap-2">
+                    <div className="bg-white/[0.02] border border-cyan-600/20 rounded-[24px] p-4 flex flex-col gap-2">
                         <div className="text-[0.75rem] font-bold text-cyan-400 uppercase tracking-wide"> Driving License <span className="text-accent-red">*</span></div>
                         <input required className="input-field font-mono" value={form.dlNumber} onChange={e => set('dlNumber', e.target.value)} placeholder="DL-0420110012345" />
                     </div>
@@ -149,7 +149,7 @@ export default function RegisterPage() {
                     {error && <p className="text-accent-red text-sm text-center">{error}</p>}
 
                     <button type="submit" disabled={loading}
-                        className="w-full py-3.5 rounded-xl font-bold bg-gradient-to-r from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:shadow-[0_0_25px_rgba(34,211,238,0.35)] disabled:opacity-50 transition-all font-sans cursor-pointer border-none">
+                        className="w-full py-3.5 rounded-[24px] font-bold bg-gradient-to-r from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:shadow-[0_0_25px_rgba(34,211,238,0.35)] disabled:opacity-50 transition-all font-sans cursor-pointer border-none">
                         {loading ? t('registering') : t('createAccount')}
                     </button>
                 </form>

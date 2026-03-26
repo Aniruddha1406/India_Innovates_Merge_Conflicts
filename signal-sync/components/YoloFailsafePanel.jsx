@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CITY_NODES } from '@/lib/cityNodes';
 import { collection, query, orderBy, limit, onSnapshot, doc } from 'firebase/firestore';
@@ -175,7 +175,7 @@ function CameraCard({ cam, density, ns_density, ew_density, signal, timer, event
     const timerText = (emergency || isManual) ? '--' : `${String(timer).padStart(2, '0')}s`;
 
     return (
-        <div style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 14, padding: '12px 13px', display: 'flex', flexDirection: 'column', gap: 9, transition: 'all 0.5s ease', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 16, padding: '12px 13px', display: 'flex', flexDirection: 'column', gap: 9, transition: 'all 0.5s ease', position: 'relative', overflow: 'hidden' }}>
 
             {isEmgGreen && <div style={{ position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%', background: 'linear-gradient(90deg,transparent,rgba(0,255,157,0.07),transparent)', animation: 'shimmer 2s infinite', pointerEvents: 'none' }} />}
             {isManual   && <div style={{ position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%', background: 'linear-gradient(90deg,transparent,rgba(167,139,250,0.06),transparent)', animation: 'shimmer 3s infinite', pointerEvents: 'none' }} />}
@@ -515,7 +515,7 @@ export default function YoloFailsafePanel({ cityName = 'Delhi' }) {
     const manualCount = cams.filter(c => c.manualOverride !== null).length;
 
     return (
-        <div style={{ background: 'rgba(7,12,22,0.97)', border: `1px solid ${emgActive || iotActive ? 'rgba(0,255,157,0.25)' : manualCount > 0 ? 'rgba(167,139,250,0.2)' : 'rgba(0,245,255,0.1)'}`, borderRadius: 20, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14, transition: 'border-color 0.5s' }}>
+        <div style={{ background: '#1C1825', border: `1px solid ${emgActive || iotActive ? 'rgba(0,255,157,0.25)' : manualCount > 0 ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.12)'}`, borderRadius: 24, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14, transition: 'border-color 0.5s', fontFamily: 'Inter, sans-serif' }}>
 
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>

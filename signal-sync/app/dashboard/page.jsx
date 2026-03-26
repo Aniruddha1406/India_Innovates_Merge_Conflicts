@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Badge from '@/components/Badge';
@@ -49,22 +49,66 @@ function densityBarColor(d) {
     return 'progress-fill-red';
 }
 
-/* -- Compact Node row -- */
-function NodeRow({ node, onClick }) {
-    const dot = node.density < 40 ? 'bg-accent-green' : node.density < 70 ? 'bg-accent-amber' : 'bg-accent-red';
+/* -- Bright Node Card -- */
+function NodeCard({ node, onClick, compact = false }) {
+    const isHigh = node.density >= 70;
+    const isMed  = node.density >= 40 && node.density < 70;
+    const isLow  = node.density < 40;
+
+    const glowColor = isHigh ? 'rgba(255,59,92,0.18)' : isMed ? 'rgba(255,184,0,0.15)' : 'rgba(0,255,157,0.14)';
+    const borderColor = isHigh
+        ? (node.emergency ? 'rgba(255,59,92,0.6)' : 'rgba(255,59,92,0.32)')
+        : isMed
+        ? 'rgba(255,184,0,0.32)'
+        : 'rgba(0,255,157,0.30)';
+    const densityTextColor = isHigh ? '#ff3b5c' : isMed ? '#ffb800' : '#00ff9d';
+    const barClass = isHigh ? 'progress-fill-red' : isMed ? 'progress-fill-amber' : 'progress-fill-green';
+
+    if (compact) {
+        return (
+            <div
+                onClick={() => onClick(node)}
+                className="cursor-pointer rounded-xl p-3 flex flex-col gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110"
+                style={{ background: `rgba(18,17,28,0.85)`, border: `1px solid ${borderColor}`, boxShadow: `0 0 12px ${glowColor}` }}
+            >
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-[0.6rem] font-mono font-bold" style={{ color: densityTextColor }}>{node.id}</span>
+                        {node.corridor && <span className="text-[0.5rem] font-bold px-1 py-0.5 rounded" style={{ background: 'rgba(0,245,255,0.12)', color: '#00f5ff', border: '0.8px solid rgba(0,245,255,0.3)' }}>COR</span>}
+                        {node.emergency && <span className="text-[0.5rem] font-bold px-1 py-0.5 rounded" style={{ background: 'rgba(255,59,92,0.15)', color: '#ff3b5c', border: '0.8px solid rgba(255,59,92,0.4)' }}>EMG</span>}
+                    </div>
+                    <span className="text-sm font-black font-mono" style={{ color: densityTextColor }}>{node.density}%</span>
+                </div>
+                <div className="text-[0.68rem] font-medium text-text-secondary leading-tight truncate">{node.name}</div>
+                <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <div className={`h-full rounded-full ${barClass} transition-all duration-700`} style={{ width: `${node.density}%` }} />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div
             onClick={() => onClick(node)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${node.emergency ? 'border-accent-red/30 bg-accent-red/[0.03] hover:border-accent-red/50' : node.corridor ? 'border-accent-cyan/25 bg-accent-cyan/[0.02] hover:border-accent-cyan/40' : 'border-white/5 bg-white/[0.01] hover:border-white/15'}`}
+            className="cursor-pointer rounded-xl p-2.5 flex items-center gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110"
+            style={{ background: 'rgba(18,17,28,0.85)', border: `1px solid ${borderColor}`, boxShadow: `0 0 14px ${glowColor}` }}
         >
-            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
-            <span className="text-[0.65rem] font-mono text-text-muted w-10 flex-shrink-0">{node.id}</span>
-            <span className="flex-1 text-[0.74rem] font-medium text-text-secondary truncate">{node.name}</span>
-            {node.corridor && <span className="text-[0.55rem] font-bold text-accent-cyan border border-accent-cyan/30 rounded-full px-1.5 py-0.5 flex-shrink-0">COR</span>}
-            {node.emergency && <span className="text-[0.55rem] font-bold text-accent-red border border-accent-red/30 rounded-full px-1.5 py-0.5 flex-shrink-0">EMG</span>}
-            <span className={`text-[0.78rem] font-black font-mono flex-shrink-0 ${densityColor(node.density)}`}>{node.density}%</span>
-            <div className="w-14 h-1 bg-white/5 rounded-full overflow-hidden flex-shrink-0">
-                <div className={`h-full rounded-full ${densityBarColor(node.density)} transition-all duration-700`} style={{ width: `${node.density}%` }} />
+            {/* Density ring */}
+            <div className="flex-shrink-0 flex flex-col items-center justify-center w-10 h-10 rounded-lg text-center" style={{ background: `${glowColor}`, border: `1px solid ${borderColor}` }}>
+                <span className="text-[0.82rem] font-black font-mono leading-none" style={{ color: densityTextColor }}>{node.density}</span>
+                <span className="text-[0.45rem] font-bold" style={{ color: densityTextColor }}>%</span>
+            </div>
+            {/* Name + bar */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[0.58rem] font-mono text-text-muted">{node.id}</span>
+                    {node.corridor && <span className="text-[0.5rem] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(0,245,255,0.12)', color: '#00f5ff', border: '0.8px solid rgba(0,245,255,0.3)' }}>COR</span>}
+                    {node.emergency && <span className="text-[0.5rem] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(255,59,92,0.15)', color: '#ff3b5c', border: '0.8px solid rgba(255,59,92,0.4)' }}>EMG</span>}
+                </div>
+                <div className="text-[0.75rem] font-semibold text-text-primary truncate mb-1.5">{node.name}</div>
+                <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <div className={`h-full rounded-full ${barClass} transition-all duration-700`} style={{ width: `${node.density}%` }} />
+                </div>
             </div>
         </div>
     );
@@ -183,6 +227,179 @@ function CorridorCard({ corridor, onTerminate, t }) {
     );
 }
 
+/* -- Nodes Section with Search + View All modal -- */
+function NodesSection({ nodes, onSelectNode, selectedNode, selectedCity, t }) {
+    const [search, setSearch] = useState('');
+    const [showAll, setShowAll] = useState(false);
+    const [modalSearch, setModalSearch] = useState('');
+
+    const filtered = nodes.filter(n =>
+        n.name.toLowerCase().includes(search.toLowerCase()) ||
+        n.id.toLowerCase().includes(search.toLowerCase())
+    );
+    const preview = filtered.slice(0, 8);
+
+    const modalFiltered = nodes.filter(n =>
+        n.name.toLowerCase().includes(modalSearch.toLowerCase()) ||
+        n.id.toLowerCase().includes(modalSearch.toLowerCase())
+    );
+
+    const highCount = nodes.filter(n => n.density >= 70).length;
+    const medCount  = nodes.filter(n => n.density >= 40 && n.density < 70).length;
+    const lowCount  = nodes.filter(n => n.density < 40).length;
+
+    return (
+        <>
+            <section className="relative">
+                {/* Header */}
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">
+                            {t('intersectionNodes')} · {selectedCity}
+                        </h2>
+                        <span className="text-[0.6rem] font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: 'rgba(0,245,255,0.10)', color: '#00f5ff', border: '0.8px solid rgba(0,245,255,0.3)' }}>
+                            {nodes.length} Active
+                        </span>
+                    </div>
+                    {/* Legend + View All */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                        {[['Low', '#00ff9d', lowCount], ['Med', '#ffb800', medCount], ['High', '#ff3b5c', highCount]].map(([l, c, cnt]) => (
+                            <span key={l} className="flex items-center gap-1 text-[0.62rem] text-text-muted">
+                                <span className="w-2 h-2 rounded-full" style={{ background: c }} />
+                                {l} <span className="font-bold font-mono" style={{ color: c }}>{cnt}</span>
+                            </span>
+                        ))}
+                        <button onClick={() => setShowAll(true)}
+                            className="text-[0.68rem] font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all font-sans hover:brightness-110"
+                            style={{ background: 'rgba(115,94,239,0.15)', color: '#a78bfa', border: '1px solid rgba(115,94,239,0.35)' }}>
+                            View All ↗
+                        </button>
+                    </div>
+                </div>
+
+                {/* Search bar */}
+                <div className="relative mb-4">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">🔍</span>
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Search by node name or ID…"
+                        className="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm text-text-primary font-sans outline-none transition-all"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', caretColor: '#735EEF' }}
+                        onFocus={e => e.target.style.borderColor = 'rgba(115,94,239,0.55)'}
+                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.10)'}
+                    />
+                    {search && (
+                        <button onClick={() => setSearch('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white text-xs font-sans cursor-pointer">✕</button>
+                    )}
+                </div>
+
+                {/* Node cards grid */}
+                {preview.length === 0 ? (
+                    <div className="text-center py-10 text-text-muted text-sm">No nodes match "{search}"</div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                            {preview.map(node => <NodeCard key={node.id} node={node} onClick={onSelectNode} />)}
+                        </div>
+                        {filtered.length > 8 && (
+                            <div className="text-center mt-3">
+                                <button onClick={() => setShowAll(true)}
+                                    className="text-[0.72rem] font-semibold text-accent-violet hover:text-white transition-colors cursor-pointer font-sans">
+                                    +{filtered.length - 8} more nodes · View All →
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* Node Detail slide-up */}
+                {selectedNode && (
+                    <NodeDetail node={selectedNode} onClose={() => onSelectNode(null)} t={t} />
+                )}
+            </section>
+
+            {/* View All Modal */}
+            {showAll && (
+                <div
+                    className="fixed inset-0 z-50 flex flex-col"
+                    style={{ background: 'rgba(5,4,13,0.96)', backdropFilter: 'blur(18px)' }}
+                >
+                    {/* Modal header */}
+                    <div className="flex items-center justify-between px-7 py-4 flex-shrink-0"
+                        style={{ borderBottom: '0.8px solid rgba(255,255,255,0.08)', background: 'rgba(18,17,22,0.90)' }}>
+                        <div className="flex items-center gap-3">
+                            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg, #735EEF, #4D7CFF)', flexShrink: 0 }} />
+                            <span className="font-semibold text-base" style={{ fontFamily: 'Inter, sans-serif' }}>
+                                <span style={{ color: '#735EEF' }}>Signal</span>Sync
+                            </span>
+                            <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.1)' }} />
+                            <span className="text-xs text-text-muted">All Intersection Nodes · {selectedCity}</span>
+                            <span className="text-[0.6rem] font-bold px-2 py-0.5 rounded-full"
+                                style={{ background: 'rgba(0,245,255,0.10)', color: '#00f5ff', border: '0.8px solid rgba(0,245,255,0.3)' }}>
+                                {nodes.length} Nodes
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
+                                {[['Low', '#00ff9d', lowCount], ['Med', '#ffb800', medCount], ['High', '#ff3b5c', highCount]].map(([l, c, cnt]) => (
+                                    <span key={l} className="flex items-center gap-1 text-[0.65rem] text-text-muted">
+                                        <span className="w-2 h-2 rounded-full" style={{ background: c }} />{l}: <b style={{ color: c }}>{cnt}</b>
+                                    </span>
+                                ))}
+                            </div>
+                            <button onClick={() => setShowAll(false)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold text-text-muted hover:text-white transition-colors cursor-pointer font-sans"
+                                style={{ background: 'rgba(255,255,255,0.06)', border: '0.8px solid rgba(255,255,255,0.1)' }}>
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Modal Search */}
+                    <div className="px-7 py-4 flex-shrink-0" style={{ borderBottom: '0.8px solid rgba(255,255,255,0.06)' }}>
+                        <div className="relative max-w-md">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">🔍</span>
+                            <input
+                                type="text"
+                                value={modalSearch}
+                                onChange={e => setModalSearch(e.target.value)}
+                                placeholder="Search all nodes…"
+                                className="w-full pl-8 pr-10 py-2.5 rounded-xl text-sm text-text-primary font-sans outline-none"
+                                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(115,94,239,0.35)', caretColor: '#735EEF' }}
+                                autoFocus
+                            />
+                            {modalSearch && (
+                                <button onClick={() => setModalSearch('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white text-xs font-sans cursor-pointer">✕</button>
+                            )}
+                        </div>
+                        {modalSearch && (
+                            <p className="text-[0.68rem] text-text-muted mt-2">{modalFiltered.length} result{modalFiltered.length !== 1 ? 's' : ''} for "{modalSearch}"</p>
+                        )}
+                    </div>
+
+                    {/* Modal grid */}
+                    <div className="flex-1 overflow-y-auto px-7 py-5">
+                        {modalFiltered.length === 0 ? (
+                            <div className="text-center py-20 text-text-muted">No nodes match "{modalSearch}"</div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
+                                {modalFiltered.map(node => (
+                                    <NodeCard key={node.id} node={node} compact onClick={(n) => { onSelectNode(n); setShowAll(false); }} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
+
 /* -- Demo Corridor Status  city-aware, auto-animates -- */
 function DemoCorridorStatus({ etaStr, cityName }) {
     const cityNodes = CITY_NODES[cityName] || CITY_NODES['Delhi'];
@@ -291,36 +508,41 @@ export default function DashboardPage() {
     const avgDensity = Math.round(nodes.reduce((s, n) => s + n.density, 0) / nodes.length);
     const cityLanes = selectedCity ? getCityLanes(selectedCity) : getCityLanes('Delhi');
 
-    /* -- City picker -- */
+    /* -- City picker screen -- */
     if (!selectedCity) {
         return (
-            <div className="bg-bg-deep text-text-primary font-sans min-h-screen flex flex-col">
+            <div className="bg-bg-deep text-text-primary font-sans min-h-screen flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
                 <div className="grid-bg" />
-                <header className="relative z-10 flex items-center justify-between px-6 py-4 bg-bg-deep/95 border-b border-white/5">
-                    <Link href="/" className="flex items-center gap-2 font-extrabold text-xl no-underline text-white">
-                        <div className="w-8 h-8 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan"></div>
-                        <span><span className="text-accent-cyan">Signal</span>Sync</span>
+                {/* Visuo nav */}
+                <header className="relative z-10 flex items-center justify-between px-8 py-4" style={{ backdropFilter: 'blur(12px)', borderBottom: '0.8px solid rgba(255,255,255,0.08)', background: 'rgba(18,17,22,0.85)' }}>
+                    <Link href="/" className="flex items-center gap-2.5 font-semibold text-lg no-underline text-white">
+                        <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg, #735EEF, #4D7CFF)', flexShrink: 0 }} />
+                        <span><span style={{ color: '#735EEF' }}>Signal</span>Sync</span>
                     </Link>
-                    <div className="flex items-center gap-3">
-                        <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline"> {t('portalLink')}</Link>
-                        <Link href="/" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline"> {t('homeLink')}</Link>
+                    <div className="flex items-center gap-2">
+                        <Link href="/portal" className="visuo-btn-ghost" style={{ padding: '8px 18px', fontSize: '0.82rem' }}>{t('portalLink')}</Link>
+                        <Link href="/" className="visuo-btn-ghost" style={{ padding: '8px 18px', fontSize: '0.82rem' }}>{t('homeLink')}</Link>
                     </div>
                 </header>
 
                 <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 py-20">
-                    <div className="flex items-center gap-2 mb-4 text-accent-cyan text-xs font-bold uppercase tracking-widest">
-                        <span className="w-5 h-0.5 bg-accent-cyan rounded-full" />{t('monitorCity')}
+                    {/* Visuo purple glow above */}
+                    <div className="visuo-glow" style={{ width: 500, height: 350, top: 0, left: '50%', transform: 'translateX(-50%)', background: 'radial-gradient(ellipse at center, rgba(115,94,239,0.20) 0%, transparent 70%)' }} />
+
+                    <div className="flex justify-center mb-5">
+                        <span className="visuo-section-badge">{t('monitorCity')}</span>
                     </div>
-                    <h1 className="text-4xl font-extrabold tracking-tight mb-3 text-center">{t('selectACity')}</h1>
+                    <h1 className="text-4xl sm:text-5xl font-normal text-center mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>{t('selectACity')}</h1>
                     <p className="text-text-secondary text-sm mb-12 text-center max-w-md">{t('citySelectDesc')}</p>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-w-3xl w-full">
                         {CITIES.map(city => (
                             <button key={city.name} onClick={() => setSelectedCity(city.name)}
-                                className="flex flex-col items-start gap-1 bg-bg-card border border-white/5 hover:border-accent-cyan/40 hover:bg-accent-cyan/[0.04] rounded-2xl p-5 text-left transition-all cursor-pointer font-sans group">
-                                <span className="text-base font-bold group-hover:text-accent-cyan transition-colors">{city.name}</span>
-                                <span className="text-[0.7rem] text-text-muted">{city.state}</span>
-                                {city.name === 'Delhi' && <span className="text-[0.6rem] font-bold text-accent-cyan mt-1.5"> {t('liveData')}</span>}
+                                className="visuo-card flex flex-col items-start gap-1 p-5 text-left transition-all duration-300 cursor-pointer font-sans group hover:-translate-y-1"
+                                style={{ fontFamily: 'Inter, sans-serif', border: '0.8px solid rgba(255,255,255,0.12)' }}>
+                                <span className="text-sm font-semibold text-text-primary group-hover:text-white transition-colors">{city.name}</span>
+                                <span className="text-[0.68rem] text-text-muted">{city.state}</span>
+                                {city.name === 'Delhi' && <span className="text-[0.58rem] font-semibold mt-1.5" style={{ color: '#735EEF' }}>⬤ {t('liveData')}</span>}
                             </button>
                         ))}
                     </div>
@@ -331,41 +553,41 @@ export default function DashboardPage() {
 
     /* -- Main Dashboard -- */
     return (
-        <div className="bg-bg-deep text-text-primary font-sans min-h-screen flex flex-col">
+        <div className="bg-bg-deep text-text-primary font-sans min-h-screen flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
             <div className="grid-bg" />
 
-            {/* Header */}
-            <header className="relative z-10 flex items-center justify-between px-6 py-3.5 bg-bg-deep/95 border-b border-white/5 flex-shrink-0">
+            {/* Visuo Header */}
+            <header className="relative z-10 flex items-center justify-between px-6 py-3.5 flex-shrink-0" style={{ backdropFilter: 'blur(12px)', borderBottom: '0.8px solid rgba(255,255,255,0.08)', background: 'rgba(18,17,22,0.90)' }}>
                 <div className="flex items-center gap-3">
-                    <Link href="/" className="flex items-center gap-2 font-extrabold text-lg no-underline text-white">
-                        <div className="w-7 h-7 rounded-[5px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan text-sm"></div>
-                        <span><span className="text-accent-cyan">Signal</span>Sync</span>
+                    <Link href="/" className="flex items-center gap-2 font-semibold text-base no-underline text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg, #735EEF, #4D7CFF)', flexShrink: 0 }} />
+                        <span><span style={{ color: '#735EEF' }}>Signal</span>Sync</span>
                     </Link>
-                    <div className="w-px h-5 bg-white/10" />
+                    <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.1)' }} />
                     <span className="text-xs text-text-muted">{t('liveControl')}</span>
-                    <span className="text-xs font-bold text-accent-cyan">{selectedCity}</span>
-                    <button onClick={() => setSelectedCity(null)} className="text-[0.6rem] text-text-muted hover:text-white bg-white/5 border border-white/5 rounded-md px-1.5 py-0.5 font-sans cursor-pointer">{t('changeCity')}</button>
+                    <span className="text-xs font-semibold" style={{ color: '#735EEF' }}>{selectedCity}</span>
+                    <button onClick={() => setSelectedCity(null)} className="text-[0.6rem] text-text-muted hover:text-white font-sans cursor-pointer" style={{ background: 'rgba(255,255,255,0.05)', border: '0.8px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '2px 8px' }}>{t('changeCity')}</button>
                 </div>
 
                 <div className="flex items-center gap-8">
                     {[
-                        [t('activeCorridorsHdr'), String(liveCorridors.length || 0), 'text-accent-green'],
-                        [t('nodesOnline'), '24/24', 'text-accent-cyan'],
-                        [t('avgDensity'), `${avgDensity}%`, avgDensity > 70 ? 'text-accent-red' : avgDensity > 45 ? 'text-accent-amber' : 'text-accent-green'],
+                        [t('activeCorridorsHdr'), String(liveCorridors.length || 0), '#4ade80'],
+                        [t('nodesOnline'), '24/24', '#735EEF'],
+                        [t('avgDensity'), `${avgDensity}%`, avgDensity > 70 ? '#f87171' : avgDensity > 45 ? '#fbbf24' : '#4ade80'],
                     ].map(([l, v, c]) => (
                         <div key={l} className="flex flex-col items-center">
-                            <span className="text-[0.58rem] text-text-muted uppercase tracking-widest">{l}</span>
-                            <span className={`text-lg font-extrabold font-mono leading-tight ${c}`}>{v}</span>
+                            <span className="text-[0.55rem] text-text-muted uppercase tracking-widest">{l}</span>
+                            <span className="text-lg font-bold font-mono leading-tight" style={{ color: c }}>{v}</span>
                         </div>
                     ))}
                 </div>
 
-                <div className="flex items-center gap-2.5">
-                    <div className="flex items-center gap-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full px-2.5 py-1">
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: 'rgba(74,222,128,0.08)', border: '0.8px solid rgba(74,222,128,0.25)' }}>
                         <StatusDot color="green" /><span className="font-mono text-xs text-text-secondary">LIVE</span>
                     </div>
-                    <Link href="/portal" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-accent-cyan text-black no-underline">{t('portalLink')}</Link>
-                    <Link href="/" className="inline-flex gap-1.5 items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/5 text-text-primary no-underline">{t('homeLink')}</Link>
+                    <Link href="/portal" className="visuo-btn-ghost" style={{ padding: '6px 16px', fontSize: '0.8rem' }}>{t('portalLink')}</Link>
+                    <Link href="/" className="visuo-btn-ghost" style={{ padding: '6px 16px', fontSize: '0.8rem' }}>{t('homeLink')}</Link>
                 </div>
             </header>
 
@@ -420,35 +642,25 @@ export default function DashboardPage() {
                                 </Link>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                                {cityLiveCorridors.map(c => (
-                                    <CorridorCard key={c.id} corridor={c} onTerminate={() => terminateCorridor(c.id)} t={t} />
-                                ))}
-                            </div>
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                                    {cityLiveCorridors.slice(0, 2).map(c => (
+                                        <CorridorCard key={c.id} corridor={c} onTerminate={() => terminateCorridor(c.id)} t={t} />
+                                    ))}
+                                </div>
+                                {cityLiveCorridors.length > 2 && (
+                                    <div className="text-center mt-3">
+                                        <Link href="/portal" className="text-[0.72rem] font-semibold no-underline transition-colors" style={{ color: '#a78bfa' }}>
+                                            +{cityLiveCorridors.length - 2} more corridor{cityLiveCorridors.length - 2 > 1 ? 's' : ''} · View all in Portal →
+                                        </Link>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </section>
 
                     {/* ALL Intersection Nodes */}
-                    <section className="relative">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted">{t('intersectionNodes')}  {selectedCity}</h2>
-                                <Badge variant="cyan">{nodes.length} {t('activeCors')}</Badge>
-                            </div>
-                            <div className="flex items-center gap-3 text-[0.65rem] text-text-muted">
-                                {[[t('densityLow'), '#00ff9d'], [t('densityMed'), '#ffb800'], [t('densityHigh'), '#ff3b5c']].map(([l, c]) => (
-                                    <span key={l} className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: c }} />{l}</span>
-                                ))}
-                                <span className="text-[0.62rem] text-text-muted italic">{t('clickNodeDetails')}</span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {nodes.map(node => <NodeRow key={node.id} node={node} onClick={setSelectedNode} />)}
-                        </div>
-                        {selectedNode && (
-                            <NodeDetail node={selectedNode} onClose={() => setSelectedNode(null)} t={t} />
-                        )}
-                    </section>
+                    <NodesSection nodes={nodes} onSelectNode={setSelectedNode} selectedNode={selectedNode} selectedCity={selectedCity} t={t} />
 
                     {/* --- YOLO AI Traffic Density Panel (full-width) --- */}
                     <YoloFailsafePanel cityName={selectedCity} />

@@ -126,32 +126,42 @@ function HeroVisual() {
 function StatCard({ target, unit, label }) {
     const [value, ref] = useCountUp(target);
     return (
-        <div ref={ref} className="flex-1 min-w-[130px] px-6 py-5 flex flex-col gap-1">
+        <div ref={ref} className="flex-1 min-w-[130px] px-5 py-4 flex flex-col gap-1">
             <div>
-                <span className="text-[2.2rem] font-black leading-none grad-text font-mono">{value}</span>
-                <span className="text-xl font-bold text-text-secondary">{unit}</span>
+                <span className="text-[2.2rem] font-extrabold leading-none text-white font-mono">{value}</span>
+                <span className="text-xl font-bold text-accent-purple ml-1">{unit}</span>
             </div>
-            <div className="text-[0.78rem] text-text-muted leading-tight mt-0.5">{label}</div>
+            <div className="text-[0.72rem] text-text-muted mt-0.5">{label}</div>
         </div>
     );
 }
 
 /* -- Pillar Card -- */
 function PillarCard({ letter, badge, variant, title, desc, features, tags }) {
-    const borderMap = { cyan: 'border-accent-cyan/25 shadow-[0_0_0_1px_rgba(0,245,255,0.1),0_20px_60px_rgba(0,245,255,0.05)]', green: 'border-accent-green/25 shadow-[0_0_0_1px_rgba(0,255,157,0.1),0_20px_60px_rgba(0,255,157,0.05)]', violet: 'border-accent-violet/25' };
-    const letterBg = { cyan: 'bg-[rgba(0,245,255,0.15)] text-accent-cyan', green: 'bg-[rgba(0,255,157,0.15)] text-accent-green', violet: 'bg-[rgba(124,58,237,0.15)] text-[#a78bfa]' };
+    const borderMap = {
+        cyan: 'border-accent-cyan/20 hover:border-accent-cyan/40',
+        green: 'border-accent-green/20 hover:border-accent-green/40',
+        violet: 'border-accent-violet/20 hover:border-accent-violet/40',
+    };
+    const letterBg = {
+        cyan:   'bg-[rgba(0,245,255,0.1)] text-accent-cyan',
+        green:  'bg-[rgba(0,255,157,0.1)] text-accent-green',
+        violet: 'bg-[rgba(115,94,239,0.1)] text-accent-violet',
+    };
+    const dotColor = { cyan: 'bg-accent-cyan', green: 'bg-accent-green', violet: 'bg-accent-violet' };
     return (
-        <div className={`bg-bg-card border rounded-xl p-8 flex flex-col gap-5 hover:-translate-y-1 hover:shadow-lg transition-all ${borderMap[variant]}`}>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-[1.4rem] font-black ${letterBg[variant]}`}>{letter}</div>
+        <div className={`bg-bg-card border rounded-xl p-8 flex flex-col gap-5 hover:-translate-y-1 transition-all duration-300 ${borderMap[variant]}`}
+             style={{ borderRadius: 24 }}>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-[1.3rem] font-bold ${letterBg[variant]}`}>{letter}</div>
             <div>
                 <Badge variant={variant}>{badge}</Badge>
-                <h3 className="text-lg font-bold mt-2 leading-snug">{title}</h3>
+                <h3 className="text-base font-semibold mt-2 leading-snug text-text-primary">{title}</h3>
             </div>
             <p className="text-sm text-text-secondary leading-relaxed">{desc}</p>
             <ul className="flex flex-col gap-2">
                 {features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-[0.82rem] text-text-secondary">
-                        <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${variant === 'cyan' ? 'bg-accent-cyan' : variant === 'green' ? 'bg-accent-green' : 'bg-[#a78bfa]'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${dotColor[variant]}`} />
                         {f}
                     </li>
                 ))}
@@ -400,69 +410,102 @@ function FaqSection() {
     );
 }
 
-/* -- Main Page Export -- */
+    /* -- Main Page Export -- */
 export default function HomePage() {
     const { t } = useLanguage();
     return (
         <>
+            {/* ── VISUO BACKGROUND (home page only) ── */}
+            {/* Base near-black */}
+            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: '#05040d' }} />
+
+            {/* Central purple cone/spotlight from top-center */}
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+                background: [
+                    'radial-gradient(ellipse 50% 60% at 50% -5%, rgba(141,86,253,0.72) 0%, rgba(115,94,239,0.35) 38%, transparent 65%)',
+                    'radial-gradient(ellipse 90% 55% at 50% -8%, rgba(100,60,220,0.25) 0%, transparent 62%)',
+                    'radial-gradient(ellipse 22% 70% at 0% 50%, rgba(115,94,239,0.08) 0%, transparent 70%)',
+                    'radial-gradient(ellipse 22% 70% at 100% 50%, rgba(115,94,239,0.08) 0%, transparent 70%)',
+                ].join(', '),
+            }} />
+
+            {/* Top 1px purple edge glow line */}
+            <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, height: '1px', zIndex: 9999, pointerEvents: 'none',
+                background: 'linear-gradient(90deg, transparent 0%, rgba(115,94,239,0.55) 18%, rgba(141,86,253,1) 50%, rgba(115,94,239,0.55) 82%, transparent 100%)',
+                boxShadow: '0 0 22px 4px rgba(141,86,253,0.45), 0 0 60px 8px rgba(115,94,239,0.18)',
+            }} />
+
+            {/* Bottom 1px blue-purple edge glow line */}
+            <div style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, height: '1px', zIndex: 9999, pointerEvents: 'none',
+                background: 'linear-gradient(90deg, transparent 0%, rgba(77,124,255,0.65) 15%, rgba(141,86,253,0.95) 50%, rgba(77,124,255,0.65) 85%, transparent 100%)',
+                boxShadow: '0 0 28px 5px rgba(77,124,255,0.30), 0 0 80px 14px rgba(141,86,253,0.18)',
+            }} />
+
             <Navbar />
 
-            {/* HERO */}
+            {/* ── HERO ─────────────────────────────────────────────── */}
             <section id="hero" className="relative min-h-screen flex items-center pt-28 pb-20 overflow-hidden">
-                <div className="glow-blob glow-blob-cyan w-[600px] h-[600px] -top-48 -left-24 opacity-60" style={{ background: 'rgba(0,245,255,0.12)' }} />
-                <div className="glow-blob" style={{ width: '500px', height: '500px', top: '-100px', right: '-150px', opacity: 0.5, background: 'rgba(124,58,237,0.12)' }} />
-                <div className="max-w-[1200px] mx-auto px-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
-                    <div>
-                        {/* Badge */}
-                        <div className="inline-flex items-center gap-2.5 bg-accent-cyan/10 border border-accent-cyan/20 rounded-full px-4 py-2 mb-6 text-sm text-text-secondary">
-                            <StatusDot color="green" /><span>{t('heroBadge')}</span><Badge variant="cyan">v1.0</Badge>
-                        </div>
-                        <h1 className="text-5xl font-black leading-[1.05] tracking-[-1.5px] mb-5 animate-fade-in-up">
-                            {t('heroTitle') || <>Intelligent Traffic<br />That <span className="grad-text">Saves Lives</span><br />in Real Time</>}
-                        </h1>
-                        <p className="text-[1.05rem] text-text-secondary leading-relaxed max-w-[520px] mb-8">
-                            {t('heroDesc')}
-                        </p>
-                        <div className="flex flex-wrap gap-3 mb-12">
-                            <a href="#pillars" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-bold bg-cyan-500 hover:bg-cyan-400 text-white hover:-translate-y-px transition-all">{t('exploreSolution')}</a>
-                            <Link href="/dashboard" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-bold bg-white/5 border border-white/5 hover:bg-white/10 hover:-translate-y-px transition-all no-underline text-text-primary">{t('liveDashboard')}</Link>
-                        </div>
-                        {/* Stats bar */}
-                        <div className="flex flex-wrap bg-white/[0.03] border border-white/5 rounded-xl overflow-hidden divide-x divide-white/5">
-                            {[
-                                { target: 94, unit: '%', label: t('stat1Label') },
-                                { target: 3, unit: 's', label: t('stat2Label') },
-                                { target: 40, unit: '%', label: t('stat3Label') },
-                                { target: 95, unit: '%+', label: t('stat4Label') }
-                            ].map(s => (
-                                <StatCard key={s.label} {...s} />
-                            ))}
-                        </div>
+                {/* Visuo purple radial glow */}
+                <div className="visuo-glow" style={{ width: 700, height: 700, top: '-250px', left: '50%', transform: 'translateX(-50%)', background: 'radial-gradient(ellipse at center, rgba(115,94,239,0.30) 0%, rgba(77,124,255,0.12) 40%, transparent 70%)' }} />
+
+                <div className="max-w-[1100px] mx-auto px-8 w-full flex flex-col items-center text-center">
+                    {/* Pill badge */}
+                    <div className="visuo-badge mb-8">
+                        <StatusDot color="green" />
+                        <span>{t('heroBadge')}</span>
                     </div>
-                    <HeroVisual />
+
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl font-normal leading-[1.1] tracking-[-1px] mb-6 animate-fade-in-up" style={{ fontFamily: 'Inter, sans-serif' }}>
+                        {t('heroTitle') || <>Intelligent Traffic<br />That <span style={{ color: '#735EEF' }}>Saves Lives</span><br />in Real Time</>}
+                    </h1>
+
+                    <p className="text-lg text-text-secondary leading-relaxed max-w-[540px] mb-10">
+                        {t('heroDesc')}
+                    </p>
+
+                    {/* Visuo pill CTAs */}
+                    <div className="flex flex-wrap gap-4 justify-center mb-14">
+                        <a href="#pillars" className="visuo-btn-primary">{t('exploreSolution')}</a>
+                        <Link href="/dashboard" className="visuo-btn-ghost">{t('liveDashboard')}</Link>
+                    </div>
+
+                    {/* Stats bar */}
+                    <div className="flex flex-wrap bg-bg-card border rounded-xl overflow-hidden divide-x" style={{ borderColor: 'rgba(255,255,255,0.12)', borderRadius: 20, borderWidth: '0.8px' }}>
+                        {[
+                            { target: 94, unit: '%',  label: t('stat1Label') },
+                            { target: 3,  unit: 's',  label: t('stat2Label') },
+                            { target: 40, unit: '%',  label: t('stat3Label') },
+                            { target: 95, unit: '%+', label: t('stat4Label') },
+                        ].map(s => <StatCard key={s.label} {...s} />)}
+                    </div>
                 </div>
             </section>
 
             <div className="g-divider" />
 
-            {/* PROBLEM */}
-            <section id="problem" className="relative z-10 py-24">
-                <div className="max-w-[1200px] mx-auto px-10">
-                    <div className="flex items-center gap-2 mb-4 text-accent-cyan text-xs font-bold uppercase tracking-widest"><span className="w-5 h-0.5 bg-accent-cyan rounded-full" />{t('crisisLabel')}</div>
-                    <h2 className="text-4xl font-extrabold tracking-tight mb-3">{t('crisisTitle')}</h2>
-                    <p className="text-text-secondary mb-12 max-w-xl">{t('crisisDesc')}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* ── PROBLEM ──────────────────────────────────────────── */}
+            <section id="problem" className="relative z-10 py-28">
+                <div className="max-w-[1100px] mx-auto px-8">
+                    <div className="flex justify-center mb-5">
+                        <span className="visuo-section-badge">{t('crisisLabel')}</span>
+                    </div>
+                    <h2 className="text-4xl sm:text-5xl font-normal text-center mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>{t('crisisTitle')}</h2>
+                    <p className="text-text-secondary text-center mb-14 max-w-xl mx-auto">{t('crisisDesc')}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                         {[
-                            { icon: '', bg: 'bg-[rgba(255,59,92,0.15)]', color: 'text-accent-red', titleKey: 'crisis1Title', descKey: 'crisis1Desc', statKey: 'crisis1Stat', statLabelKey: 'crisis1StatLabel' },
-                            { icon: '', bg: 'bg-[rgba(255,184,0,0.15)]', color: 'text-accent-amber', titleKey: 'crisis2Title', descKey: 'crisis2Desc', statKey: 'crisis2Stat', statLabelKey: 'crisis2StatLabel' },
-                            { icon: '', bg: 'bg-[rgba(0,245,255,0.10)]', color: 'text-accent-cyan', titleKey: 'crisis3Title', descKey: 'crisis3Desc', statKey: 'crisis3Stat', statLabelKey: 'crisis3StatLabel' },
-                        ].map(({ icon, bg, color, titleKey, descKey, statKey, statLabelKey }) => (
-                            <div key={titleKey} className="bg-bg-card border border-white/5 rounded-xl p-8 hover:-translate-y-1 transition-all">
-                                <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center text-2xl mb-4`}>{icon}</div>
-                                <h3 className="font-bold text-lg mb-2">{t(titleKey)}</h3>
-                                <p className="text-text-secondary text-sm leading-relaxed mb-5">{t(descKey)}</p>
-                                <div className="flex items-center gap-2.5 pt-4 border-t border-white/5">
-                                    <span className={`text-2xl font-black font-mono ${color}`}>{t(statKey)}</span>
+                            { icon: '🚨', bg: 'rgba(248,113,113,0.08)', color: '#f87171', border: 'rgba(248,113,113,0.18)', titleKey: 'crisis1Title', descKey: 'crisis1Desc', statKey: 'crisis1Stat', statLabelKey: 'crisis1StatLabel' },
+                            { icon: '⏱️', bg: 'rgba(251,191,36,0.08)',  color: '#fbbf24', border: 'rgba(251,191,36,0.18)',  titleKey: 'crisis2Title', descKey: 'crisis2Desc', statKey: 'crisis2Stat', statLabelKey: 'crisis2StatLabel' },
+                            { icon: '📡', bg: 'rgba(115,94,239,0.08)',  color: '#735EEF', border: 'rgba(115,94,239,0.18)',  titleKey: 'crisis3Title', descKey: 'crisis3Desc', statKey: 'crisis3Stat', statLabelKey: 'crisis3StatLabel' },
+                        ].map(({ icon, bg, color, border, titleKey, descKey, statKey, statLabelKey }) => (
+                            <div key={titleKey} className="visuo-card p-7 flex flex-col gap-4 hover:-translate-y-1 transition-all duration-300">
+                                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style={{ background: bg, border: `0.8px solid ${border}` }}>{icon}</div>
+                                <h3 className="font-semibold text-base text-text-primary">{t(titleKey)}</h3>
+                                <p className="text-text-secondary text-sm leading-relaxed flex-1">{t(descKey)}</p>
+                                <div className="flex items-center gap-2 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                                    <span className="text-2xl font-black font-mono" style={{ color }}>{t(statKey)}</span>
                                     <span className="text-xs text-text-muted">{t(statLabelKey)}</span>
                                 </div>
                             </div>
@@ -473,15 +516,17 @@ export default function HomePage() {
 
             <div className="g-divider" />
 
-            {/* PILLARS */}
-            <section id="pillars" className="relative z-10 py-24">
-                <div className="max-w-[1200px] mx-auto px-10">
-                    <div className="flex items-center gap-2 mb-4 text-accent-cyan text-xs font-bold uppercase tracking-widest"><span className="w-5 h-0.5 bg-accent-cyan rounded-full" />{t('solutionLabel')}</div>
-                    <h2 className="text-4xl font-extrabold tracking-tight mb-3">{t('pillarsTitle')}</h2>
-                    <p className="text-text-secondary mb-12 max-w-xl">{t('pillarsDesc')}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <PillarCard letter="A" badge="Pillar A" variant="cyan" title={t('pillarATitle')} desc={t('pillarADesc')} features={[t('pillarAF1'), t('pillarAF2'), t('pillarAF3')]} tags={['YOLOv8', 'OpenCV', 'WebSocket']} />
-                        <PillarCard letter="B" badge="Pillar B" variant="green" title={t('pillarBTitle')} desc={t('pillarBDesc')} features={[t('pillarBF1'), t('pillarBF2'), t('pillarBF3')]} tags={['Edge AI', 'PyTorch', 'Offline']} />
+            {/* ── PILLARS ──────────────────────────────────────────── */}
+            <section id="pillars" className="relative z-10 py-28">
+                <div className="max-w-[1100px] mx-auto px-8">
+                    <div className="flex justify-center mb-5">
+                        <span className="visuo-section-badge">{t('solutionLabel')}</span>
+                    </div>
+                    <h2 className="text-4xl sm:text-5xl font-normal text-center mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>{t('pillarsTitle')}</h2>
+                    <p className="text-text-secondary text-center mb-14 max-w-xl mx-auto">{t('pillarsDesc')}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <PillarCard letter="A" badge="Pillar A" variant="cyan"   title={t('pillarATitle')} desc={t('pillarADesc')} features={[t('pillarAF1'), t('pillarAF2'), t('pillarAF3')]} tags={['YOLOv8', 'OpenCV', 'WebSocket']} />
+                        <PillarCard letter="B" badge="Pillar B" variant="green"  title={t('pillarBTitle')} desc={t('pillarBDesc')} features={[t('pillarBF1'), t('pillarBF2'), t('pillarBF3')]} tags={['Edge AI', 'PyTorch', 'Offline']} />
                         <PillarCard letter="C" badge="Pillar C" variant="violet" title={t('pillarCTitle')} desc={t('pillarCDesc')} features={[t('pillarCF1'), t('pillarCF2'), t('pillarCF3')]} tags={['RBAC + MFA', 'FastAPI', 'React.js']} />
                     </div>
                 </div>
@@ -499,56 +544,72 @@ export default function HomePage() {
 
             <div className="g-divider" />
 
-            {/* FOOTER */}
-            <footer className="relative z-10 border-t border-white/5 bg-[rgba(13,17,23,0.6)] backdrop-blur-xl">
-                <div className="max-w-[1200px] mx-auto px-10 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
+            {/* ── CTA AREA BEFORE FOOTER ────────────────────────── */}
+            <section className="relative z-10 py-28 text-center overflow-hidden">
+                <div className="visuo-glow" style={{ width: 600, height: 400, bottom: '-100px', left: '50%', transform: 'translateX(-50%)', background: 'radial-gradient(ellipse at center, rgba(115,94,239,0.22) 0%, transparent 70%)' }} />
+                <div className="relative z-10 max-w-[700px] mx-auto px-8">
+                    <span className="visuo-badge mb-6 inline-flex">Get started today</span>
+                    <h2 className="text-4xl sm:text-5xl font-normal mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>Ready to transform your city&apos;s traffic?</h2>
+                    <p className="text-text-secondary mb-10 max-w-md mx-auto">Deploy AI-powered signal management across every intersection.</p>
+                    <div className="flex gap-4 justify-center">
+                        <Link href="/dashboard" className="visuo-btn-primary">Open Live Dashboard</Link>
+                        <Link href="/portal" className="visuo-btn-ghost">Launch Green Corridor</Link>
+                    </div>
+                </div>
+            </section>
+
+            <div className="g-divider" />
+
+            {/* ── FOOTER ───────────────────────────────────────────── */}
+            <footer className="relative z-10 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)', background: '#0D0B12' }}>
+                <div className="max-w-[1100px] mx-auto px-8 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
                     {/* Brand */}
                     <div className="md:col-span-1">
-                        <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl no-underline text-white mb-3">
-                            <div className="w-9 h-9 rounded-[6px] bg-gradient-to-br from-accent-cyan to-accent-violet flex items-center justify-center neon-cyan"></div>
-                            <span><span className="text-accent-cyan">Signal</span>Sync</span>
+                        <Link href="/" className="flex items-center gap-2.5 font-semibold text-lg no-underline text-white mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #735EEF, #4D7CFF)' }} />
+                            <span><span style={{ color: '#735EEF' }}>Signal</span>Sync</span>
                         </Link>
                         <p className="text-text-muted text-xs leading-relaxed mb-4">{t('footerDesc')}</p>
                         <div className="flex items-center gap-2"><StatusDot color="green" /><span className="text-xs text-text-secondary">{t('footerStatus')}</span></div>
                     </div>
-                    {/* Emergency Contacts */}
+                    {/* Emergency */}
                     <div>
-                        <div className="text-[0.7rem] font-bold uppercase tracking-widest text-text-muted mb-4">{t('footerEmergency')}</div>
+                        <div className="text-[0.65rem] font-semibold uppercase tracking-widest text-text-muted mb-4">{t('footerEmergency')}</div>
                         <div className="flex flex-col gap-2.5">
-                            {[['Ambulance (National)', '102'], ['Fire Brigade', '101'], ['Police', '100'], ['AIIMS Delhi', '011-2658-8500'], ['GVK EMRI', '108']].map(([l, v]) => (
-                                <div key={l} className="flex justify-between items-center text-xs border-b border-white/5 pb-2">
+                            {[['Ambulance', '102'], ['Fire Brigade', '101'], ['Police', '100'], ['AIIMS Delhi', '011-2658-8500'], ['GVK EMRI', '108']].map(([l, v]) => (
+                                <div key={l} className="flex justify-between items-center text-xs border-b pb-2" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                                     <span className="text-text-secondary">{l}</span>
-                                    <span className="font-mono font-bold text-accent-green">{v}</span>
+                                    <span className="font-mono font-bold" style={{ color: '#4ade80' }}>{v}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
                     {/* Cities */}
                     <div>
-                        <div className="text-[0.7rem] font-bold uppercase tracking-widest text-text-muted mb-4">{t('footerCities')}</div>
+                        <div className="text-[0.65rem] font-semibold uppercase tracking-widest text-text-muted mb-4">{t('footerCities')}</div>
                         <div className="grid grid-cols-2 gap-1.5">
-                            {['Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad'].map(c => (
-                                <div key={c} className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-accent-cyan transition-colors cursor-default">
-                                    <span className="w-1 h-1 rounded-full bg-accent-cyan/50" />{c}
+                            {['Mumbai','Delhi','Bengaluru','Hyderabad','Chennai','Pune','Kolkata','Ahmedabad'].map(c => (
+                                <div key={c} className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-white transition-colors cursor-default">
+                                    <span className="w-1 h-1 rounded-full" style={{ background: '#735EEF' }} />{c}
                                 </div>
                             ))}
                         </div>
                     </div>
-                    {/* Quick Links */}
+                    {/* Links */}
                     <div>
-                        <div className="text-[0.7rem] font-bold uppercase tracking-widest text-text-muted mb-4">{t('footerQuickAccess')}</div>
+                        <div className="text-[0.65rem] font-semibold uppercase tracking-widest text-text-muted mb-4">{t('footerQuickAccess')}</div>
                         <div className="flex flex-col gap-2">
-                            <Link href="/dashboard" className="text-xs text-text-secondary hover:text-accent-cyan no-underline transition-colors">{t('liveDashboard')}</Link>
-                            <Link href="/portal" className="text-xs text-text-secondary hover:text-accent-cyan no-underline transition-colors">{t('footerPortal')}</Link>
-                            <a href="#pillars" className="text-xs text-text-secondary hover:text-accent-cyan no-underline transition-colors">{t('footerSolution')}</a>
-                            <a href="#flows" className="text-xs text-text-secondary hover:text-accent-cyan no-underline transition-colors">{t('footerUserJourneys')}</a>
-                            <a href="#faq" className="text-xs text-text-secondary hover:text-accent-cyan no-underline transition-colors">{t('footerEdgeCases')}</a>
+                            <Link href="/dashboard" className="text-xs text-text-secondary hover:text-white no-underline transition-colors">{t('liveDashboard')}</Link>
+                            <Link href="/portal"    className="text-xs text-text-secondary hover:text-white no-underline transition-colors">{t('footerPortal')}</Link>
+                            <a href="#pillars"      className="text-xs text-text-secondary hover:text-white no-underline transition-colors">{t('footerSolution')}</a>
+                            <a href="#flows"        className="text-xs text-text-secondary hover:text-white no-underline transition-colors">{t('footerUserJourneys')}</a>
+                            <a href="#faq"          className="text-xs text-text-secondary hover:text-white no-underline transition-colors">{t('footerEdgeCases')}</a>
                         </div>
                     </div>
                 </div>
-                <div className="border-t border-white/5 px-10 py-4 flex justify-between items-center flex-wrap gap-3">
-                    <span className="text-[0.7rem] text-text-muted">© 2026 SignalSync · India Innovates Hackathon · Prototype v1.0</span>
-                    <span className="text-[0.7rem] text-text-muted">Built with Next.js · React · Tailwind CSS</span>
+                <div className="px-8 py-4 flex justify-between items-center flex-wrap gap-3" style={{ borderTop: '0.8px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-[0.68rem] text-text-muted">© 2026 SignalSync · India Innovates Hackathon · Prototype v1.0</span>
+                    <span className="text-[0.68rem] text-text-muted">Built with Next.js · React · Inter · Tailwind CSS</span>
                 </div>
             </footer>
         </>
